@@ -39,8 +39,8 @@
     return graph;
   };
 
-  let n = 8;
-  let thing = 0.2;
+  let n = 30;
+  let thing = 0.92;
 
   $: getRadius = (radii: Map<number, number>) => (key: number) =>
     radii.get(key) ?? thing;
@@ -49,7 +49,7 @@
     const radii = new Map<number, number>();
     for (const key of graph.interior.keys()) radii.set(key, 0.5);
 
-    for (let i = 0; i < 64; ++i) {
+    for (let i = 0; i < 256; ++i) {
       for (const [key, node] of graph.interior.entries()) {
         const nextRadius = Geometry.adjustFlowerHyperbolic(
           getRadius(radii)(key),
@@ -96,7 +96,7 @@
 
     const frontierKeys: number[] = [...start.petalKeys];
     while (frontierKeys.length) {
-      const currentKey = frontierKeys.pop()!;
+      const currentKey = frontierKeys.shift()!;
       const node = graph.interior.get(currentKey);
       if (!node) continue;
 
@@ -129,28 +129,24 @@
           axis,
           Complex.polar((1 - dist) / (1 + dist), angle)
         );
-        position.set(
-          petalKey,
-          Complex.div(
-            Complex.add(bonk, currentPos),
-            Complex.add(
-              Complex.one,
-              Complex.mul(Complex.conj(currentPos), bonk)
+
+        if (!parentKeys.has(petalKey)) {
+          position.set(
+            petalKey,
+            Complex.div(
+              Complex.add(bonk, currentPos),
+              Complex.add(
+                Complex.one,
+                Complex.mul(Complex.conj(currentPos), bonk)
+              )
             )
-          )
-        );
+          );
 
-        //position.set(
-        //  petalKey,
-        //  add(currentPos, Complex.polar(currentRadius + gr(petalKey), angle))
-        //);
+          parentKeys.set(petalKey, currentKey);
+          frontierKeys.push(petalKey);
+        }
+
         angle += angles[j]!;
-
-        if (parentKeys.has(petalKey)) continue;
-        parentKeys.set(petalKey, currentKey);
-        frontierKeys.push(petalKey);
-
-        // TODO short-circuit if not interior, maybe, we'll see
       }
     }
 
@@ -179,12 +175,13 @@
     bind:clientHeight={viewportHeight}
   >
     <svg width="100%" height="100%">
-      <!--circle
-      fill="red"
-      cx={viewportWidth / 2}
-      cy={viewportHeight / 2}
-      r={(-Math.log(getRadius(rs)(4)) / 2) * unitSize}
-    /-->
+      <circle
+        fill="transparent"
+        stroke="red"
+        cx={viewportWidth / 2}
+        cy={viewportHeight / 2}
+        r={unitSize}
+      />
       {#each [...l.entries()] as [key, pos]}
         {@const s = getRadius(rs)(key)}
         {@const R = (1 - Math.sqrt(s)) / (1 + Math.sqrt(s))}
@@ -197,6 +194,7 @@
         <text
           {x}
           {y}
+          font-size="2px"
           fill="white"
           text-anchor="middle"
           dominant-baseline="middle">{key}</text
