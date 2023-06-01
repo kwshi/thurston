@@ -5,11 +5,6 @@
   type Node<T> = { label: T; petalKeys: number[] };
   type PlanarGraph<T> = { interior: Map<number, Node<T>> };
 
-  const add = (p: Complex.Complex, q: Complex.Complex) => ({
-    x: p.x + q.x,
-    y: p.y + q.y,
-  });
-
   const triangle = (
     n: number
   ): PlanarGraph<{ row: number; column: number }> => {

@@ -8,5 +8,6 @@
       "$layout/*": ["layout/*"]
     },
     "plugins": [{ "name": "@astrojs/ts-plugin" }]
-  }
+  },
+  "include": ["src"]
 }
