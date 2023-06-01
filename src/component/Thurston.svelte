@@ -1,8 +1,6 @@
 <script lang="ts">
   import * as Geometry from "$lib/geometry";
 
-  const n = 5;
-
   type Node<T> = { label: T; petalKeys: number[] };
   type PlanarGraph<T> = { interior: Map<number, Node<T>> };
   type Point = { x: number; y: number };
@@ -43,15 +41,19 @@
     return graph;
   };
 
+  const getRadius = (radii: Map<number, number>) => (key: number) =>
+    radii.get(key) ??
+    ([1, 2, 3, 5, 55, 67, 65, 76].indexOf(key) === -1 ? 1 : 0.4);
+
   const pack = <T>(graph: PlanarGraph<T>) => {
     const radii = new Map<number, number>();
     for (const key of graph.interior.keys()) radii.set(key, 1);
 
-    for (let i = 0; i < 10; ++i) {
+    for (let i = 0; i < 64; ++i) {
       for (const [key, node] of graph.interior.entries()) {
         const nextRadius = Geometry.adjustFlower(
           radii.get(key) ?? 1,
-          node.petalKeys.map((key) => radii.get(key) ?? 1)
+          node.petalKeys.map(getRadius(radii))
         );
         radii.set(key, nextRadius);
       }
@@ -66,26 +68,26 @@
   ) => {
     const position = new Map<number, Point>();
 
+    const gr = getRadius(radii);
+
     const start = graph.interior.get(startKey)!;
-    const startRadius = radii.get(startKey) ?? 1;
+    const startRadius = gr(startKey);
     position.set(startKey, { x: 0, y: 0 });
     const startAngles = Geometry.petalAngles(
       startRadius,
-      start.petalKeys.map((key) => radii.get(key) ?? 1)
+      start.petalKeys.map(gr)
     );
 
     let startAngle = 0;
     for (let i = 0; i < startAngles.length; ++i) {
       const petalKey = start.petalKeys[i]!;
-      position.set(
-        petalKey,
-        polar(startRadius + (radii.get(petalKey) ?? 1), startAngle)
-      );
+      position.set(petalKey, polar(startRadius + gr(petalKey), startAngle));
       startAngle += startAngles[i]!;
     }
 
     const parentKeys = new Map<number, number>();
     for (const petalKey of start.petalKeys) parentKeys.set(petalKey, startKey);
+    console.log(parentKeys);
 
     const frontierKeys: number[] = [...start.petalKeys];
     while (frontierKeys.length) {
@@ -102,8 +104,8 @@
 
       const parentIndex = node.petalKeys.indexOf(parentKey);
       const angles = Geometry.petalAngles(
-        radii.get(currentKey) ?? 1,
-        node.petalKeys.map((key) => radii.get(key) ?? 1)
+        gr(currentKey),
+        node.petalKeys.map(gr)
       );
       let angle = Math.atan2(
         parentPos.y - currentPos.y,
@@ -113,16 +115,15 @@
         const j = (parentIndex + i) % node.petalKeys.length;
         const petalKey = node.petalKeys[j]!;
 
-        //if (parentKeys.has(petalKey)) continue;
-
         position.set(
           petalKey,
-          add(
-            currentPos,
-            polar(currentRadius + (radii.get(petalKey) ?? 1), angle)
-          )
+          add(currentPos, polar(currentRadius + gr(petalKey), angle))
         );
         angle += angles[j]!;
+
+        if (parentKeys.has(petalKey)) continue;
+        parentKeys.set(petalKey, currentKey);
+        frontierKeys.push(petalKey);
 
         // TODO short-circuit if not interior, maybe, we'll see
       }
@@ -131,7 +132,7 @@
     return position;
   };
 
-  const t = triangle(8);
+  const t = triangle(12);
   const rs = pack(t);
   const l = layout(t, rs, 4);
   console.log(l);
@@ -139,7 +140,7 @@
   let viewportWidth: number = 1;
   let viewportHeight: number = 1;
 
-  $: unitSize = Math.min(viewportWidth, viewportHeight) / 16;
+  $: unitSize = Math.min(viewportWidth, viewportHeight) / 48;
 </script>
 
 <div
@@ -149,7 +150,7 @@
 >
   <svg width="100%" height="100%">
     {#each [...l.entries()] as [key, pos]}
-      {@const r = (rs.get(key) ?? 1) * unitSize}
+      {@const r = getRadius(rs)(key) * unitSize}
       {@const x = pos.x * unitSize + viewportWidth / 2}
       {@const y = -pos.y * unitSize + viewportHeight / 2}
       <circle cx={x} cy={y} {r} />
