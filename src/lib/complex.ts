@@ -1,7 +1,8 @@
 export type Complex = { readonly x: number; readonly y: number };
 
-export const complex = (x: number, y: number): Complex => ({ x, y });
-export const polar = (r: number, t: number) =>
+export const complex = (x: number, y: number): Complex =>
+  Object.freeze({ x, y });
+export const polar = (r: number, t: number): Complex =>
   complex(r * Math.cos(t), r * Math.sin(t));
 
 export const zero = complex(0, 0);

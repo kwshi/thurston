@@ -1,4 +1,4 @@
-import type * as Graph from "$lib/graph";
+import * as Graph from "$lib/graph";
 import * as Complex from "$lib/complex";
 import * as Geometry from "$lib/hyperbolic";
 
@@ -23,11 +23,75 @@ export const relaxIterations = <T>(
   for (let i = 0; i < n; ++i) relax(nodes, relaxFlower);
 };
 
-export const layout = <T>(
+export const layoutE = <T>(
+  start: Graph.NodeInterior<
+    Graph.Label.Radius & Graph.Label.Position & Graph.Label.Data<T>
+  >
+) => {
+  start.label.position = Complex.zero;
+  const startAngles = Geometry.petalAngles(
+    Geometry.petalAngleE,
+    start.label.radius,
+    start.petals.map(Graph.Label.getRadius)
+  );
+
+  let startAngle = 0;
+  for (let i = 0; i < startAngles.length; ++i) {
+    const petal = start.petals[i]!;
+    petal.label.position = Complex.polar(
+      start.label.radius + petal.label.radius,
+      startAngle
+    );
+    startAngle += startAngles[i]!;
+  }
+
+  const seen = new Set<Graph.Node<Graph.Label.Position>>();
+  seen.add(start);
+  for (const petal of start.petals) seen.add(petal);
+
+  const frontier: {
+    node: Graph.NodeInterior<Graph.Label.Position & Graph.Label.Radius>;
+    parent: Graph.Node<Graph.Label.Position & Graph.Label.Radius>;
+  }[] = [];
+  for (const petal of start.petals)
+    if (petal.petals) frontier.push({ parent: start, node: petal });
+  while (frontier.length) {
+    const edge = frontier.pop()!;
+    if (!edge.node.petals) continue;
+
+    const parentIndex = edge.node.petals.indexOf(edge.parent);
+    const angles = Geometry.petalAngles(
+      Geometry.petalAngleE,
+      edge.node.label.radius,
+      edge.node.petals.map(Graph.Label.getRadius)
+    );
+    let angle = Complex.arg(
+      Complex.sub(edge.parent.label.position, edge.node.label.position)
+    );
+    for (let i = 0; i < edge.node.petals.length; ++i) {
+      const j = (parentIndex + i) % edge.node.petals.length;
+      const petal = edge.node.petals[j]!;
+
+      if (!seen.has(petal)) {
+        seen.add(petal);
+
+        petal.label.position = Complex.add(
+          edge.node.label.position,
+          Complex.polar(edge.node.label.radius + petal.label.radius, angle)
+        );
+
+        if (petal.petals) frontier.push({ parent: edge.node, node: petal });
+      }
+
+      angle += angles[j]!;
+    }
+  }
+};
+
+export const layoutH = <T>(
   start: Graph.NodeInterior<Graph.Label.Position & Graph.Label.WithRadius<T>>
 ) => {
-  const position = new Map<number, Complex.Complex>();
-
+  start.label.position = Complex.zero;
   const startAngles = Geometry.petalAngles(
     Geometry.petalAngleH,
     start.label.radius,
@@ -42,68 +106,65 @@ export const layout = <T>(
     startAngle += startAngles[i]!;
   }
 
-  const parents = new Map<
-    symbol,
-    Graph.Node<Graph.Label.Position & Graph.Label.Radius>
-  >();
-  for (const petal of start.petals) parents.set(petal.id, start);
+  const parents = new Set<Graph.Node<Graph.Label.Position>>();
+  parents.add(start);
+  for (const petal of start.petals) parents.add(petal);
 
-  const frontierKeys: Graph.Node<Graph.Label.Position & Graph.Label.Radius>[] =
-    [...start.petals];
-  while (frontierKeys.length) {
-    const currentKey = frontierKeys.shift()!;
-    const node = graph.interior.get(currentKey);
-    if (!node) continue;
+  const frontier: {
+    node: Graph.NodeInterior<Graph.Label.Position & Graph.Label.Radius>;
+    parent: Graph.Node<Graph.Label.Position & Graph.Label.Radius>;
+  }[] = [];
+  for (const petal of start.petals)
+    if (petal.petals) frontier.push({ node: petal, parent: start });
 
-    const currentRadius = radii.get(currentKey)!;
-    const currentPos = position.get(currentKey)!;
-    const parentKey = parentKeys.get(currentKey)!;
-    const parentPos = position.get(parentKey)!;
+  while (frontier.length) {
+    const edge = frontier.pop()!;
+    if (!edge.node.petals) continue;
 
-    const parentIndex = node.petalKeys.indexOf(parentKey);
-    const angles = Geometry.petalAnglesHyperbolic(
-      gr(currentKey),
-      node.petalKeys.map(gr)
+    const parentIndex = edge.node.petals.indexOf(edge.parent);
+    const angles = Geometry.petalAngles(
+      Geometry.petalAngleH,
+      edge.node.label.radius,
+      edge.node.petals.map(Graph.Label.getRadius)
     );
     const axis = Complex.normalize(
       Complex.div(
-        Complex.sub(parentPos, currentPos),
+        Complex.sub(edge.parent.label.position, edge.node.label.position),
         Complex.sub(
           Complex.one,
-          Complex.mul(Complex.conj(currentPos), parentPos)
+          Complex.mul(
+            Complex.conj(edge.node.label.position),
+            edge.parent.label.position
+          )
         )
       )
     );
-    let angle = 0;
-    for (let i = 0; i < node.petalKeys.length; ++i) {
-      const j = (parentIndex + i) % node.petalKeys.length;
-      const petalKey = node.petalKeys[j]!;
 
-      const dist = Math.sqrt(currentRadius * gr(petalKey));
+    let angle = 0;
+    for (let i = 0; i < edge.node.petals.length; ++i) {
+      const j = (parentIndex + i) % edge.node.petals.length;
+      const petal = edge.node.petals[j]!;
+
+      const dist = Math.sqrt(edge.node.label.radius * petal.label.radius);
       const bonk = Complex.mul(
         axis,
         Complex.polar((1 - dist) / (1 + dist), angle)
       );
 
-      if (!parentKeys.has(petalKey)) {
-        position.set(
-          petalKey,
-          Complex.div(
-            Complex.add(bonk, currentPos),
-            Complex.add(
-              Complex.one,
-              Complex.mul(Complex.conj(currentPos), bonk)
-            )
+      if (!parents.has(petal)) {
+        petal.label.position = Complex.div(
+          Complex.add(bonk, edge.node.label.position),
+          Complex.add(
+            Complex.one,
+            Complex.mul(Complex.conj(edge.node.label.position), bonk)
           )
         );
 
-        parentKeys.set(petalKey, currentKey);
-        frontierKeys.push(petalKey);
+        parents.add(petal);
+        if (petal.petals) frontier.push({ node: petal, parent: edge.node });
       }
 
       angle += angles[j]!;
     }
   }
-
-  return position;
 };

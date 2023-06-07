@@ -5,7 +5,7 @@ export type NodeUnresolved<T> = NodeOf<T, number[] | null>;
 
 export type NodeInterior<T> = NodeOf<T, Node<T>[]>;
 export type NodeBoundary<T> = NodeOf<T, null>;
-export type Node<T> = NodeOf<T, Node<T>[] | null>;
+export type Node<T> = NodeInterior<T> | NodeBoundary<T>;
 
 export type GraphUnresolved<T> = Map<number, NodeUnresolved<T>>;
 export type Graph<T> = Map<number, Node<T>>;
@@ -15,14 +15,30 @@ export namespace Label {
   export type Position = { position: Complex.Complex };
   export type Data<T> = { data: T };
   export type WithRadius<T> = Radius & Data<T>;
+
+  export const getRadius = (a: Node<Radius>) => a.label.radius;
 }
 
-const mapLabel = <A, B>(f: (a: A) => B, graph: Graph<A>): Graph<B> => {
+export const mapLabel = <A, B>(f: (a: A) => B, graph: Graph<A>): Graph<B> => {
   const replace = new Map<Node<A>, Node<B>>();
+  for (const node of graph.values()) {
+    if (replace.has(node)) continue;
+    replace.set(node, { ...node, label: f(node.label), petals: null });
 
-  //const mapped: Graph<B> = new Map();
-  for (const [key, node] of graph.entries())
-    mapped.set(key, { ...node, label: f(node.label) });
+    if (!node.petals) continue;
+    for (const petal of node.petals) {
+      if (!replace.has(petal)) continue;
+      replace.set(petal, { ...petal, label: f(petal.label), petals: null });
+    }
+  }
+
+  const mapped: Graph<B> = new Map();
+  for (const [key, node] of graph.entries()) {
+    const petals = node.petals?.map((petal) => replace.get(petal)!) ?? null;
+    mapped.set(key, { ...node, label: f(node.label), petals });
+  }
+
+  return mapped;
 };
 
 export const interior = <T>(graph: Graph<T>) => {
@@ -49,9 +65,8 @@ export const resolve = <T>(
     for (const petalKey of nodeUnresolved.petals) {
       const petal = graph.get(petalKey);
       if (!petal) {
-        const missingList = missing.get(nodeKey) ?? [];
-        missingList.push(petalKey);
-        missing.set(nodeKey, missingList);
+        if (!missing.has(nodeKey)) missing.set(nodeKey, []);
+        missing.get(nodeKey)!.push(petalKey);
         continue;
       }
       node.petals.push(petal);
