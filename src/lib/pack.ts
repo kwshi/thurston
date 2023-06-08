@@ -23,6 +23,72 @@ export const relaxIterations = <T>(
   for (let i = 0; i < n; ++i) relax(nodes, relaxFlower);
 };
 
+export const layout = <T>(
+  petalAngle: (v: number, u: number, w: number) => number,
+  start: Graph.NodeInterior<
+    Graph.Label.Radius & Graph.Label.Position & Graph.Label.Data<T>
+  >
+) => {
+  start.label.position = Complex.zero;
+  const startAngles = Geometry.petalAngles(
+    petalAngle,
+    start.label.radius,
+    start.petals.map(Graph.Label.getRadius)
+  );
+
+  let startAngle = 0;
+  for (let i = 0; i < startAngles.length; ++i) {
+    const petal = start.petals[i]!;
+    petal.label.position = Complex.polar(
+      start.label.radius + petal.label.radius,
+      startAngle
+    );
+    startAngle += startAngles[i]!;
+  }
+
+  const seen = new Set<Graph.Node<Graph.Label.Position>>();
+  seen.add(start);
+  for (const petal of start.petals) seen.add(petal);
+
+  const frontier: {
+    node: Graph.NodeInterior<Graph.Label.Position & Graph.Label.Radius>;
+    parent: Graph.Node<Graph.Label.Position & Graph.Label.Radius>;
+  }[] = [];
+  for (const petal of start.petals)
+    if (petal.petals) frontier.push({ parent: start, node: petal });
+  while (frontier.length) {
+    const edge = frontier.pop()!;
+    if (!edge.node.petals) continue;
+
+    const parentIndex = edge.node.petals.indexOf(edge.parent);
+    const angles = Geometry.petalAngles(
+      petalAngle,
+      edge.node.label.radius,
+      edge.node.petals.map(Graph.Label.getRadius)
+    );
+    let angle = Complex.arg(
+      Complex.sub(edge.parent.label.position, edge.node.label.position)
+    );
+    for (let i = 0; i < edge.node.petals.length; ++i) {
+      const j = (parentIndex + i) % edge.node.petals.length;
+      const petal = edge.node.petals[j]!;
+
+      if (!seen.has(petal)) {
+        seen.add(petal);
+
+        petal.label.position = Complex.add(
+          edge.node.label.position,
+          Complex.polar(edge.node.label.radius + petal.label.radius, angle)
+        );
+
+        if (petal.petals) frontier.push({ parent: edge.node, node: petal });
+      }
+
+      angle += angles[j]!;
+    }
+  }
+};
+
 export const layoutE = <T>(
   start: Graph.NodeInterior<
     Graph.Label.Radius & Graph.Label.Position & Graph.Label.Data<T>
