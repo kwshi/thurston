@@ -19,33 +19,31 @@ export namespace Label {
   export const getRadius = (a: Node<Radius>) => a.label.radius;
 }
 
-export const mapLabel = <A, B>(f: (a: A) => B, graph: Graph<A>): Graph<B> => {
+export const mapLabel = <A, B>(
+  origin: NodeInterior<A>,
+  f: (a: A) => B
+): { replace: Map<Node<A>, Node<B>>; origin: NodeInterior<B> } => {
+  // graph search to initialize all replacement nodes
   const replace = new Map<Node<A>, Node<B>>();
-  for (const node of graph.values()) {
-    if (replace.has(node)) continue;
-    replace.set(node, { ...node, label: f(node.label), petals: null });
+  for (const node of traverseDfs(origin))
+    if (!replace.has(node))
+      replace.set(node, { ...node, label: f(node.label), petals: null });
 
-    if (!node.petals) continue;
-    for (const petal of node.petals) {
-      if (!replace.has(petal)) continue;
-      replace.set(petal, { ...petal, label: f(petal.label), petals: null });
-    }
-  }
+  // graph search (again) to update all petal dependencies
+  for (const node of traverseDfs(origin))
+    replace.get(node)!.petals =
+      node.petals?.map((petal) => replace.get(petal)!) ?? null;
 
-  const mapped: Graph<B> = new Map();
-  for (const [key, node] of graph.entries()) {
-    const petals = node.petals?.map((petal) => replace.get(petal)!) ?? null;
-    mapped.set(key, { ...node, label: f(node.label), petals });
-  }
-
-  return mapped;
+  return { origin: replace.get(origin) as NodeInterior<B>, replace };
 };
 
-export const interior = <T>(graph: Graph<T>) => {
-  const nodes: NodeInterior<T>[] = [];
-  for (const node of graph.values())
-    if (node.petals) nodes.push({ ...node, petals: node.petals });
-  return nodes;
+export const isInterior = <T>(node: Node<T>): node is NodeInterior<T> =>
+  !!node.petals;
+
+export const interior = function* <T>(
+  graph: Graph<T>
+): Iterator<NodeInterior<T>, void, never> {
+  for (const node of graph.values()) if (node.petals) yield node;
 };
 
 export const resolve = <T>(
@@ -74,6 +72,25 @@ export const resolve = <T>(
   }
 
   return { graph, missing };
+};
+
+export const traverseDfs = function* <T>(origin: Node<T>) {
+  const seen = new Set<Node<T>>();
+  const frontier = [origin];
+
+  for (;;) {
+    const node = frontier.pop();
+    if (!node) break;
+
+    yield node;
+
+    if (!node.petals) continue;
+    for (const petal of node.petals) {
+      if (seen.has(petal)) continue;
+      seen.add(petal);
+      frontier.push(petal);
+    }
+  }
 };
 
 export namespace Example {
@@ -146,9 +163,59 @@ export namespace Example {
           hash(i + 1, j + 1),
         ]);
     }
+
+    return resolve(graph);
   };
 
-  export const rectangle = (_m: number, _n: number) => {};
+  export const rectangle = (m: number, n: number) => {
+    const graph: GraphUnresolved<{ row: number; column: number }> = new Map();
+    const hash = (i: number, j: number) => i * (2 * n + 1) + j;
+
+    const graphSet = (i: number, j: number, petals: number[] | null) =>
+      graph.set(hash(i, j), {
+        id: Symbol(),
+        label: { row: i, column: j },
+        petals,
+      });
+
+    // top/bottom boundary
+    for (let j = 0; j <= n; ++j) {
+      graphSet(0, 2 * j, null);
+      graphSet(2 * m, 2 * j, null);
+    }
+
+    // lattice rows
+    for (let i = 1; i < m; ++i) {
+      // left/right boundary
+      graphSet(2 * i, 0, null);
+      graphSet(2 * i, 2 * n, null);
+
+      // interior
+      for (let j = 1; j < n; ++j)
+        graphSet(2 * i, 2 * j, [
+          hash(2 * i, 2 * (j + 1)),
+          hash(2 * i - 1, 2 * j + 1),
+          hash(2 * (i - 1), 2 * j),
+          hash(2 * i - 1, 2 * j - 1),
+          hash(2 * i, 2 * (j - 1)),
+          hash(2 * i + 1, 2 * j - 1),
+          hash(2 * (i + 1), 2 * j),
+          hash(2 * i + 1, 2 * j + 1),
+        ]);
+    }
+
+    // square "centers"
+    for (let i = 0; i < m; ++i)
+      for (let j = 0; j < n; ++j)
+        graphSet(2 * i + 1, 2 * j + 1, [
+          hash(2 * i, 2 * j),
+          hash(2 * (i + 1), 2 * j),
+          hash(2 * (i + 1), 2 * (j + 1)),
+          hash(2 * i, 2 * (j + 1)),
+        ]);
+
+    return resolve(graph);
+  };
 
   export const hexagon = (_m: number, _n: number, _o: number) => {};
 }
