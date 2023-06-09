@@ -3,21 +3,19 @@ import * as Complex from "$lib/complex";
 import * as Geometry from "$lib/hyperbolic";
 
 export const relax = <T>(
-  nodes: Graph.Node<Graph.Label.WithRadius<T>>[],
+  nodes: Graph.NodeInterior<Graph.Label.Radius & Graph.Label.Data<T>>[],
   relaxFlower: (r: number, petals: number[]) => number
 ) => {
-  for (const node of nodes) {
-    if (!node.petals) continue;
+  for (const node of nodes)
     node.label.radius = relaxFlower(
       node.label.radius,
       node.petals.map((petal) => petal.label.radius)
     );
-  }
 };
 
 export const relaxIterations = <T>(
   n: number,
-  nodes: Graph.Node<Graph.Label.WithRadius<T>>[],
+  nodes: Graph.NodeInterior<Graph.Label.WithRadius<T>>[],
   relaxFlower: (r: number, petals: number[]) => number
 ) => {
   for (let i = 0; i < n; ++i) relax(nodes, relaxFlower);
