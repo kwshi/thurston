@@ -3,6 +3,7 @@
   import * as Complex from "$lib/complex";
   import * as Pack from "$lib/pack";
   import * as Geometry from "$lib/hyperbolic";
+  import * as Cut from "$lib/cut";
 
   let viewportWidth: number = 1;
   let viewportHeight: number = 1;
@@ -18,8 +19,11 @@
   let toolMode = ToolMode.Polygon;
   let toolDraw: { polygon: Complex.Complex[]; done: boolean } | null = null;
 
-  let stuff = Graph.Example.rectangle(10, 30);
-  let graph = stuff.graph;
+  const cutRadius = 0.02;
+  $: pts = toolDraw?.done ? Cut.cut(toolDraw.polygon, cutRadius) : null;
+  $: console.log(pts);
+
+  let { graph } = Graph.Example.parallelogram(30, 3);
   let origin = Graph.interior(graph).next().value!;
 
   let euclidean = Graph.mapLabel(origin, (data) => ({
@@ -66,7 +70,7 @@
     );
 
   const mouseDown = (ev: MouseEvent & { currentTarget: SVGElement }) => {
-    const pos = getPosition(ev, unitSizeE);
+    const pos = getPosition(ev, unitSize);
     switch (toolMode) {
       case ToolMode.Polygon:
         toolDraw = { polygon: [pos], done: false };
@@ -75,7 +79,7 @@
   };
 
   const mouseMove = (ev: MouseEvent) => {
-    const pos = getPosition(ev, unitSizeE);
+    const pos = getPosition(ev, unitSize);
     switch (toolMode) {
       case ToolMode.Polygon:
         if (!toolDraw || toolDraw.done) return;
@@ -94,9 +98,9 @@
     if (toolDraw && !toolDraw.done) toolDraw = null;
   };
 
-  const toCanvas = (z: Complex.Complex) =>
+  $: toCanvas = (z: Complex.Complex) =>
     Complex.add(
-      Complex.scale(Complex.conj(z), unitSizeE),
+      Complex.scale(Complex.conj(z), unitSize),
       Complex.complex(viewportWidth / 2, viewportHeight / 2)
     );
 </script>
@@ -123,6 +127,12 @@
             .join("") +
           (toolDraw.done ? "Z" : "")}
         <path d={pathD} stroke="red" fill={toolDraw.done ? "silver" : "none"} />
+      {/if}
+      {#if pts}
+        {#each pts as pt}
+          {@const p = toCanvas(pt)}
+          <circle cx={p.x} cy={p.y} r={cutRadius * unitSize} fill="blue" />
+        {/each}
       {/if}
       {#each [...euclidean.replace.values()] as node}
         <circle
