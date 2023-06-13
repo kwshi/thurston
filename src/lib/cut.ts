@@ -27,7 +27,7 @@ const intersectSegment = ([z, w]: Segment, y: number): number | null => {
   if (!dy) return null;
 
   const t = (y - z.y) / dy;
-  return 0 < t && t < 1 ? (1 - t) * z.x + t * w.x : null;
+  return 0 <= t && t < 1 ? (1 - t) * z.x + t * w.x : null;
 };
 
 const pointSpacing = (y1: number, y2: number, radius: number) => {
@@ -82,7 +82,7 @@ export const viableIntervals = (walls: Wall[]): Interval[] => {
 
   const spaces: Interval[] = [];
   let left = walls[0]!.interval.max;
-  let inside = true;
+  let inside = walls[0]!.cross !== null;
   for (let i = 1; i < walls.length; ++i) {
     const wall = walls[i]!;
     if (wall.interval.min > left && inside)
@@ -106,6 +106,8 @@ export const cutThick = (points: Complex.Complex[], radius: number) => {
   const walls: Segment[] = [];
   const crosses: Complex.Complex[] = [];
 
+  if (!radius) return { stuff, whee, walls, crosses };
+
   const step = Math.sqrt(3) * radius;
   const rows = new Map<number, Wall[]>();
   for (const [z1, z2] of Misc.adjacentPairs(points)) {
@@ -123,9 +125,6 @@ export const cutThick = (points: Complex.Complex[], radius: number) => {
 
   for (const [r, row] of rows.entries()) {
     const y = r * step;
-    if (Math.abs(y + 0.052) < 0.02) {
-      console.log("questionable", row);
-    }
     for (const int of row) {
       walls.push([
         Complex.complex(int.interval.min, y),
