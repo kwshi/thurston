@@ -20,6 +20,7 @@ export const scale = (a: Complex, s: number) => complex(s * a.x, s * a.y);
 export const scaleInv = (a: Complex, s: number) => complex(a.x / s, a.y / s);
 export const conj = (a: Complex) => complex(a.x, -a.y);
 export const inv = (a: Complex) => scale(conj(a), 1 / abs2(a));
+export const eq = (a: Complex, b: Complex) => a.x === b.x && a.y === b.y;
 
 export const normalize = (a: Complex) => scaleInv(a, abs(a));
 

@@ -4,6 +4,7 @@
   import * as Pack from "$lib/pack";
   import * as Geometry from "$lib/hyperbolic";
   import * as Cut from "$lib/cut";
+  import * as Misc from "$lib/misc";
 
   let viewportWidth: number = 1;
   let viewportHeight: number = 1;
@@ -18,10 +19,88 @@
 
   let toolMode = ToolMode.Polygon;
   let toolDraw: { polygon: Complex.Complex[]; done: boolean } | null = null;
+  let toolPosition: Complex.Complex | null = null;
 
-  const cutRadius = 0.02;
-  $: pts = toolDraw?.done ? Cut.cut(toolDraw.polygon, cutRadius) : null;
-  $: console.log(pts);
+  const cutRadius = 0.1;
+  $: pts = toolDraw?.done ? Cut.cutThick(toolDraw.polygon, cutRadius) : null;
+  $: console.log(toolDraw?.polygon);
+  toolDraw = {
+    done: true,
+    polygon: [
+      {
+        x: -0.3975000000000001,
+        y: 1.9275000000000002,
+      },
+      {
+        x: -0.42750000000000005,
+        y: 1.9350000000000003,
+      },
+      {
+        x: -0.5100000000000001,
+        y: 1.9275000000000002,
+      },
+      {
+        x: -0.6075,
+        y: 1.8375000000000004,
+      },
+      {
+        x: -0.6900000000000001,
+        y: 1.6950000000000003,
+      },
+      {
+        x: -0.8175000000000001,
+        y: 1.2975,
+      },
+      {
+        x: -0.8925000000000002,
+        y: 0.33000000000000007,
+      },
+      {
+        x: -0.8250000000000001,
+        y: -0.36750000000000005,
+      },
+      {
+        x: -0.7050000000000001,
+        y: -0.8625000000000002,
+      },
+      {
+        x: -0.5700000000000001,
+        y: -1.11,
+      },
+      {
+        x: -0.23250000000000004,
+        y: -1.2600000000000002,
+      },
+      {
+        x: 0.10500000000000001,
+        y: -1.0575,
+      },
+      {
+        x: 0.525,
+        y: -0.36000000000000004,
+      },
+      {
+        x: 0.6375000000000001,
+        y: 0.21000000000000002,
+      },
+      {
+        x: 0.6300000000000001,
+        y: 0.7800000000000001,
+      },
+      {
+        x: 0.6075,
+        y: 0.9000000000000001,
+      },
+      {
+        x: 0.38250000000000006,
+        y: 1.5975000000000001,
+      },
+      {
+        x: 0.36750000000000005,
+        y: 1.6200000000000003,
+      },
+    ],
+  };
 
   let { graph } = Graph.Example.parallelogram(30, 3);
   let origin = Graph.interior(graph).next().value!;
@@ -80,6 +159,7 @@
 
   const mouseMove = (ev: MouseEvent) => {
     const pos = getPosition(ev, unitSize);
+    toolPosition = pos;
     switch (toolMode) {
       case ToolMode.Polygon:
         if (!toolDraw || toolDraw.done) return;
@@ -95,6 +175,7 @@
   };
 
   const mouseLeave = () => {
+    toolPosition = null;
     if (toolDraw && !toolDraw.done) toolDraw = null;
   };
 
@@ -106,7 +187,9 @@
 </script>
 
 <div class="layout">
-  <div class="top" />
+  <div class="top">
+    {JSON.stringify(toolPosition)}
+  </div>
   <div>
     <svg
       width="100%"
@@ -127,13 +210,58 @@
             .join("") +
           (toolDraw.done ? "Z" : "")}
         <path d={pathD} stroke="red" fill={toolDraw.done ? "silver" : "none"} />
+        <!--
+        {#each [...Misc.adjacentPairs(toolDraw.polygon)] as seg}
+          {@const s = Cut.widenSegment(seg, cutRadius)}
+          {@const zo = toCanvas(seg[0])}
+          {@const wo = toCanvas(seg[1])}
+          <line stroke="purple" x1={zo.x} y1={zo.y} x2={wo.x} y2={wo.y} />
+          {#if s}
+            {@const z = toCanvas(s[0][0])}
+            {@const w = toCanvas(s[0][1])}
+            <line stroke="magenta" x1={z.x} y1={z.y} x2={w.x} y2={w.y} />
+            {@const zz = toCanvas(s[1][0])}
+            {@const ww = toCanvas(s[1][1])}
+            <line stroke="teal" x1={zz.x} y1={zz.y} x2={ww.x} y2={ww.y} />
+          {/if}
+        {/each}
+        -->
       {/if}
       {#if pts}
-        {#each pts as pt}
+        {#each pts.crosses as pt}
           {@const p = toCanvas(pt)}
-          <circle cx={p.x} cy={p.y} r={cutRadius * unitSize} fill="blue" />
+          <circle cx={p.x} cy={p.y} r={3} opacity={0.25} fill="green" />
+        {/each}
+        {#each pts.walls as pt}
+          {@const [p, q] = pt.map(toCanvas)}
+          <line x1={p.x} y1={p.y} x2={q.x} y2={q.y} stroke="orange" />
+          <circle cx={p.x} cy={p.y} r={2} stroke="purple" opacity=".25" />
+          <circle cx={q.x} cy={q.y} r={2} stroke="blue" opacity=".25" />
+        {/each}
+
+        <!--
+        {#each pts.whee as pt}
+          {@const p = toCanvas(pt)}
+          <circle
+            cx={p.x}
+            cy={p.y}
+            r={(cutRadius / 8) * unitSize}
+            fill="green"
+          />
+        {/each}
+        -->
+        {#each pts.stuff as pt}
+          {@const p = toCanvas(pt)}
+          <circle
+            cx={p.x}
+            cy={p.y}
+            r={(cutRadius / 4) * 4 * unitSize}
+            fill="blue"
+            opacity=".25"
+          />
         {/each}
       {/if}
+      <!--
       {#each [...euclidean.replace.values()] as node}
         <circle
           on:mouseenter={() => void (hoverCircle = node.id)}
@@ -146,6 +274,7 @@
           fill={node.id === hoverCircle ? "green" : "gray"}
         />
       {/each}
+      -->
     </svg>
   </div>
   <div
