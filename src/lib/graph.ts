@@ -1,7 +1,7 @@
 import type * as Complex from "$lib/complex";
 export type NodeOf<T, P> = { id: symbol; label: T; petals: P };
 
-export type NodeUnresolved<T> = NodeOf<T, number[] | null>;
+export type NodeUnresolved<T, K = number> = NodeOf<T, K[] | null>;
 
 export type NodeInterior<T> = NodeOf<T, Node<T>[]>;
 export type NodeBoundary<T> = NodeOf<T, null>;
@@ -44,6 +44,103 @@ export const interior = function* <T>(
   graph: Graph<T>
 ): Iterator<NodeInterior<T>, void, never> {
   for (const node of graph.values()) if (node.petals) yield node;
+};
+
+//export const resolve2 = <T>(
+//  graphUnresolved: Map<
+//    number,
+//    Map<number, NodeUnresolved<T, { row: number; column: number }>>
+//  >
+//): { graph: Graph<T>; missing: Map<number, Map<number, {row:number,column:number}[]>> } => {
+//  const graph = new Map<number, Map<number, Node<T>>>();
+//  const missing = new Map<number, Map<number, {row:number,column:number}[]>>();
+//
+//  for (const [row, columnsUnresolved] of graphUnresolved.entries()) {
+//    const columns = new Map();
+//    for (const [column, nodeUnresolved] of columnsUnresolved.entries())
+//      columns.set(column, { ...nodeUnresolved, petals: null });
+//    graph.set(row, columns);
+//  }
+//
+//  for (const [row, columnsUnresolved] of graphUnresolved.entries()) {
+//  for (const [column, nodeUnresolved] of columnsUnresolved.entries()) {
+//    const node = graph.get(row)!.get(column)!;
+//    if (!nodeUnresolved.petals) continue;
+//
+//    node.petals = [];
+//    for (const petalKey of nodeUnresolved.petals) {
+//      const petal = graph.get(petalKey.row)?.get(petalKey.column);
+//      if (!petal) {
+//        if (!missing.has(row)) missing.set(row, new Map());
+//        const missingColumns = missing.get(row)!
+//        if (!missingColumns.has(row)) missingColumns.set(column, [])
+//        missingColumns.get(column)!.push(petalKey);
+//        continue;
+//      }
+//      node.petals.push(petal);
+//    }
+//  }
+//
+//  return { graph, missing };
+//};
+
+export const resolveLazy = <T>(
+  lookup: (key: {
+    row: number;
+    column: number;
+  }) => NodeUnresolved<T, { row: number; column: number }> | undefined,
+  originKey: { row: number; column: number }
+): {
+  origin: Node<T> | undefined;
+  missing: { row: number; column: number }[];
+} => {
+  const cache = new Map<
+    number,
+    Map<
+      number,
+      { node: Node<T>; petals: { row: number; column: number }[] | null }
+    >
+  >();
+  const missing: { row: number; column: number }[] = [];
+
+  // initial graph search to populate cache
+  const frontier = [originKey];
+  while (frontier.length) {
+    const key = frontier.pop()!;
+    if (cache.get(key.row)?.has(key.column)) continue;
+
+    const nodeUnresolved = lookup(key);
+    if (!nodeUnresolved) {
+      missing.push(key);
+      continue;
+    }
+
+    const node = { ...nodeUnresolved, petals: null };
+    if (!cache.has(key.row)) cache.set(key.row, new Map());
+    cache
+      .get(key.row)!
+      .set(key.column, { node, petals: nodeUnresolved.petals });
+
+    if (!nodeUnresolved.petals) continue;
+    frontier.push(...nodeUnresolved.petals);
+  }
+
+  // attach dependencies
+  for (const columns of cache.values())
+    for (const cell of columns.values()) {
+      if (!cell.petals) continue;
+      cell.node.petals = [];
+      for (const key of cell.petals) {
+        const petal = cache.get(key.row)?.get(key.column)?.node;
+        if (!petal) continue;
+        cell.node.petals.push(petal);
+      }
+    }
+
+  return {
+    origin: cache.get(originKey.row)?.get(originKey.column)?.node,
+    missing,
+  };
 };
 
 export const resolve = <T>(
