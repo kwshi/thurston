@@ -312,8 +312,6 @@
 
 <style lang="postcss">
   .layout {
-    position: absolute;
-    inset: 0;
     display: grid;
     grid-template-areas: "toolbar toolbar" "left right";
     grid-template-rows: auto 1fr;

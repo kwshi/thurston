@@ -1,8 +1,44 @@
 ---
 import Html from "$layout/Html.astro";
-import Thurston from "$component/Thurston.svelte";
+import Thurston from "$component/app/Thurston.svelte";
+import Readme from "$component/app/Readme.md";
 ---
 
 <Html title="help">
-  <Thurston client:load />
+  <div class="layout">
+    <header>
+      <h1>Interactive explorations in Thurston's Riemann-mapping conjecture</h1>
+    </header>
+    <main>
+      <Thurston client:load />
+    </main>
+    <article>
+      <Readme />
+    </article>
+  </div>
 </Html>
+
+<style>
+  .layout {
+    position: absolute;
+    inset: 0;
+
+    display: grid;
+    grid-template-areas: "header readme" "thurston readme";
+    grid-template-rows: auto 1fr;
+
+    & > header {
+      grid-area: header;
+      margin: 1rem 2rem;
+    }
+
+    & > article {
+      grid-area: readme;
+      overflow-y: auto;
+    }
+
+    & > main {
+      grid-area: thurston;
+    }
+  }
+</style>
