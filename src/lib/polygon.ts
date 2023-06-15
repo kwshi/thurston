@@ -6,15 +6,60 @@ import type * as Label from "$lib/label";
 import * as Segment from "$lib/segment";
 import * as Interval from "$lib/interval";
 
-type Interval = { readonly min: number; readonly max: number };
-type Wall = { readonly interval: Interval; readonly cross: number | null };
+export type Polygon = readonly Complex.Complex[];
+
+export const slitDomain = (segment: Segment.Segment, n: number): Polygon => {
+  const [center, endpoint] = segment;
+  const points: Complex.Complex[] = [center, endpoint];
+  const ray = Complex.sub(endpoint, center);
+  for (let i = 1; i <= n; ++i)
+    points.push(
+      Complex.add(
+        center,
+        Complex.mul(ray, Complex.polar(1, (i / n) * 2 * Math.PI))
+      )
+    );
+  return points;
+};
+
+export const rectangle = ([z, w]: Segment.Segment): Polygon => [
+  z,
+  Complex.complex(z.x, w.y),
+  w,
+  Complex.complex(w.x, z.y),
+];
+
+export const toPathD = (polygon: Polygon, close = true) => {
+  const first = polygon[0];
+  if (!first) return "";
+
+  const moves: string[] = [`M${first.x} ${first.y}`];
+  for (let i = 1; i < polygon.length; ++i) {
+    const z = polygon[i]!;
+    moves.push(`L${z.x} ${z.y}`);
+  }
+  if (close) moves.push("Z");
+  return moves.join("");
+};
+
+export const containsPoint = (
+  polygon: Polygon,
+  z: Complex.Complex
+): boolean => {
+  let crossings = 0;
+  for (const edge of Misc.adjacentPairs(polygon)) {
+    const x = Segment.intersectHorizontal(edge, z.y);
+    if (x !== null && x < z.x) ++crossings;
+  }
+  return crossings % 2 == 1;
+};
 
 export const hexagonalFit = (
-  points: Complex.Complex[],
+  points: Polygon,
   radius: number
 ): Map<number, Set<number>> => {
   const rowHeight = Math.sqrt(3) * radius;
-  const wallRows = new Map<number, Wall[]>();
+  const wallRows = new Map<number, Interval.Wall[]>();
   for (const [z1, z2] of Misc.adjacentPairs(points)) {
     const rMin = Math.floor((Math.min(z1.y, z2.y) - radius) / rowHeight);
     const rMax = Math.floor((Math.max(z1.y, z2.y) + radius) / rowHeight);
@@ -40,12 +85,16 @@ export const hexagonalFit = (
   return coordinates;
 };
 
-export const cutThick = (points: Complex.Complex[], radius: number) => {
+export const cutThick = (points: Polygon, radius: number) => {
   const coordinates = hexagonalFit(points, radius);
 
   const nodes: Lattice.CoordinateMap<
     Graph.NodeUnresolved<Label.Full, Lattice.Coordinate>
   > = new Map();
+
+  // store boundary to initialize later graph-search for "inner-most" coordinate
+  const frontier: Lattice.Coordinate[] = [];
+  const interior: Lattice.CoordinateSet = new Map();
 
   const rowHeight = radius * Math.sqrt(3);
   for (const [row, columns] of coordinates.entries()) {
@@ -54,29 +103,50 @@ export const cutThick = (points: Complex.Complex[], radius: number) => {
       Graph.NodeUnresolved<Label.Full, Lattice.Coordinate>
     >();
     for (const column of columns) {
-      const petals = Lattice.hexagonalPetals({ row, column });
-      nodeColumns.set(column, {
-        id: Symbol(),
-        label: {
-          data: { row, column },
-          position: Complex.complex(
-            (row + 2 * column) * radius,
-            row * rowHeight
-          ),
-          radius,
-        },
-        petals: petals.every((key) => coordinates.get(key.row)?.has(key.column))
-          ? [...petals]
-          : null,
-      });
+      const coordinate = { row, column };
+      const petals = Lattice.hexagonalPetals(coordinate);
+      const isInterior = petals.every((key) =>
+        coordinates.get(key.row)?.has(key.column)
+      );
+      const position = Complex.complex(
+        (row + 2 * column) * radius,
+        row * rowHeight
+      );
+      const label = {
+        data: coordinate,
+        position,
+        radius,
+      };
+      if (isInterior) {
+        nodeColumns.set(column, { id: Symbol(), label, petals: [...petals] });
+        Lattice.setAdd(interior, coordinate);
+      } else {
+        nodeColumns.set(column, { id: Symbol(), label, petals: null });
+        frontier.push(coordinate);
+      }
     }
     nodes.set(row, nodeColumns);
   }
 
-  return Graph.resolveLazy((key) => nodes.get(key.row)?.get(key.column), {
-    row: 0,
-    column: 0,
-  });
+  // breadth-first search inwards, starting from boundary coordinates,
+  // to find farthest point from boundary, to use as initial origin node
+  let lastVisited: Lattice.Coordinate | null = null;
+  while (frontier.length) {
+    const current = frontier.shift()!; // TODO deque
+    for (const neighbor of Lattice.hexagonalPetals(current)) {
+      if (!Lattice.setHas(interior, neighbor)) continue;
+      Lattice.setDelete(interior, neighbor);
+      lastVisited = neighbor;
+      frontier.push(neighbor);
+    }
+  }
+
+  return lastVisited
+    ? Graph.resolveLazy(
+        (key) => nodes.get(key.row)?.get(key.column),
+        lastVisited
+      )
+    : null;
 };
 
 /*

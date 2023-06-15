@@ -24,7 +24,10 @@ export const thicken = (segment: Segment, radius: number) => {
   ] as const;
 };
 
-export const intersect = ([z, w]: Segment, y: number): number | null => {
+export const intersectHorizontal = (
+  [z, w]: Segment,
+  y: number
+): number | null => {
   const dy = w.y - z.y;
   if (!dy) return null;
 
@@ -33,6 +36,31 @@ export const intersect = ([z, w]: Segment, y: number): number | null => {
   // that is, if the `y` value exactly passes through the vertex
   // joining two segments, only one of them should count
   return 0 <= t && t < 1 ? (1 - t) * z.x + t * w.x : null;
+};
+
+export const project = (
+  [a, b]: Segment,
+  z: Complex.Complex
+): Complex.Complex => {
+  if (Complex.eq(a, b)) return a;
+
+  const ab = Complex.sub(b, a);
+  const az = Complex.sub(z, a);
+  const t = Complex.dot(az, ab) / Complex.abs2(ab);
+
+  return Complex.add(a, Complex.scale(ab, t));
+};
+
+export const pointDistance = ([a, b]: Segment, z: Complex.Complex): number => {
+  if (Complex.eq(a, b)) return Complex.dist(a, z);
+
+  const ab = Complex.sub(b, a);
+  const az = Complex.sub(z, a);
+  const t = Complex.dot(az, ab) / Complex.abs2(ab);
+
+  return 0 <= t && t <= 1
+    ? Complex.dist(Complex.add(a, Complex.scale(ab, t)), z)
+    : Math.min(Complex.dist(a, z), Complex.dist(b, z));
 };
 
 const ballWidth = (y1: number, y2: number, radius: number) => {
@@ -55,9 +83,9 @@ export const thickIntersect = (
   if (w2) intercepts.push(z2.x - w2, z2.x + w2);
 
   const [seg, see] = thicken(segment, radius)!;
-  const segX = intersect(seg, y);
-  const seeX = intersect(see, y);
-  const cross = intersect(segment, y);
+  const segX = intersectHorizontal(seg, y);
+  const seeX = intersectHorizontal(see, y);
+  const cross = intersectHorizontal(segment, y);
 
   if (segX !== null) intercepts.push(segX);
   if (seeX !== null) intercepts.push(seeX);

@@ -91,7 +91,7 @@ export const resolveLazy = <T>(
   }) => NodeUnresolved<T, { row: number; column: number }> | undefined,
   originKey: { row: number; column: number }
 ): {
-  origin: Node<T> | undefined;
+  origin: NodeInterior<T>;
   missing: { row: number; column: number }[];
 } => {
   const cache = new Map<
@@ -138,7 +138,9 @@ export const resolveLazy = <T>(
     }
 
   return {
-    origin: cache.get(originKey.row)?.get(originKey.column)?.node,
+    // TODO get rid of type assertion
+    origin: cache.get(originKey.row)?.get(originKey.column)
+      ?.node as NodeInterior<T>,
     missing,
   };
 };

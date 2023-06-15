@@ -1,4 +1,4 @@
-export const adjacentPairs = function* <T>(items: T[]) {
+export const adjacentPairs = function* <T>(items: readonly T[]) {
   if (items.length < 2) return;
 
   for (let i = 0; i < items.length - 1; ++i)

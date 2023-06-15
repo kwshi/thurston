@@ -14,6 +14,7 @@ export const fromIm = (y: number) => complex(0, y);
 
 export const abs2 = (a: Complex) => a.x * a.x + a.y * a.y;
 export const abs = (a: Complex) => Math.sqrt(abs2(a));
+export const dist = (a: Complex, b: Complex) => abs(sub(a, b));
 
 export const neg = (a: Complex) => complex(-a.x, -a.y);
 export const scale = (a: Complex, s: number) => complex(s * a.x, s * a.y);
@@ -35,6 +36,8 @@ export const mul = (a: Complex, b: Complex) =>
   complex(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
 export const div = (a: Complex, b: Complex) => mul(a, inv(b));
 
+export const dot = (a: Complex, b: Complex) => a.x * b.x + a.y * b.y;
+
 export const exp = (a: Complex) => polar(Math.exp(a.x), a.y);
 export const log = (a: Complex) => complex(Math.log(abs(a)), arg(a));
 export const cosh = (a: Complex) => scale(add(exp(a), exp(neg(a))), 1 / 2);
@@ -43,3 +46,9 @@ export const cos = (a: Complex) => cosh(mul(i, a));
 export const sin = (a: Complex) => mul(neg(i), sinh(mul(i, a)));
 
 export const pow = (a: Complex, b: Complex) => exp(mul(log(a), b));
+
+export const sum = (zs: readonly Complex[]) => {
+  let s = zero;
+  for (const z of zs) s = add(s, z);
+  return s;
+};

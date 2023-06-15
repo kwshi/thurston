@@ -1,6 +1,6 @@
 import * as Graph from "$lib/graph";
 import * as Complex from "$lib/complex";
-import * as Geometry from "$lib/hyperbolic";
+import * as Geometry from "$lib/geometry";
 
 export const relax = <T>(
   nodes: Graph.NodeInterior<Graph.Label.Radius & Graph.Label.Data<T>>[],
@@ -153,7 +153,9 @@ export const layoutE = <T>(
 };
 
 export const layoutH = <T>(
-  start: Graph.NodeInterior<Graph.Label.Position & Graph.Label.WithRadius<T>>
+  start: Graph.NodeInterior<
+    Graph.Label.Position & Graph.Label.Radius & Graph.Label.Data<T>
+  >
 ) => {
   start.label.position = Complex.zero;
   const startAngles = Geometry.petalAngles(
