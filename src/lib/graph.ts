@@ -1,4 +1,6 @@
 import type * as Complex from "$lib/complex";
+import * as Lattice from "$lib/lattice";
+
 export type NodeOf<T, P> = { id: symbol; label: T; petals: P };
 
 export type NodeUnresolved<T, K = number> = NodeOf<T, K[] | null>;
@@ -91,17 +93,15 @@ export const resolveLazy = <T>(
   }) => NodeUnresolved<T, { row: number; column: number }> | undefined,
   originKey: { row: number; column: number }
 ): {
+  nodes: Lattice.CoordinateMap<Node<T>>;
   origin: NodeInterior<T>;
   missing: { row: number; column: number }[];
 } => {
   const cache = new Map<
     number,
-    Map<
-      number,
-      { node: Node<T>; petals: { row: number; column: number }[] | null }
-    >
+    Map<number, { node: Node<T>; petals: Lattice.Coordinate[] | null }>
   >();
-  const missing: { row: number; column: number }[] = [];
+  const missing: Lattice.Coordinate[] = [];
 
   // initial graph search to populate cache
   const frontier = [originKey];
@@ -126,8 +126,12 @@ export const resolveLazy = <T>(
   }
 
   // attach dependencies
-  for (const columns of cache.values())
-    for (const cell of columns.values()) {
+  const nodes: Lattice.CoordinateMap<Node<T>> = new Map();
+  for (const [row, columns] of cache.entries()) {
+    const nodeColumns = new Map<number, Node<T>>();
+    nodes.set(row, nodeColumns);
+    for (const [column, cell] of columns.entries()) {
+      nodeColumns.set(column, cell.node);
       if (!cell.petals) continue;
       cell.node.petals = [];
       for (const key of cell.petals) {
@@ -136,11 +140,13 @@ export const resolveLazy = <T>(
         cell.node.petals.push(petal);
       }
     }
+  }
 
   return {
     // TODO get rid of type assertion
     origin: cache.get(originKey.row)?.get(originKey.column)
       ?.node as NodeInterior<T>,
+    nodes,
     missing,
   };
 };

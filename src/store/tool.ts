@@ -7,7 +7,8 @@ export const enum Mode {
   Polygon,
   DomainSlit,
   DomainRectangle,
-  Anchor,
+  AnchorZero,
+  AnchorAxis,
   Draw,
 }
 
@@ -21,12 +22,13 @@ export type State =
       readonly slit?: Segment.Segment;
     }
   | { readonly mode: Mode.DomainRectangle; readonly diagonal?: Segment.Segment }
-  | { readonly mode: Mode.Anchor }
+  | { readonly mode: Mode.AnchorZero }
+  | { readonly mode: Mode.AnchorAxis }
   | { readonly mode: Mode.Draw; readonly drawing: Polygon.Polygon };
 
 export const tool = Store.writable<State>({
-  mode: Mode.Polygon,
-  polygon: [],
+  mode: Mode.Draw,
+  drawing: [],
 });
 
 export const position = Store.writable<Complex.Complex | null>(null);

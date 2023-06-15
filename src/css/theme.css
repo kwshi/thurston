@@ -1,2 +1,6 @@
 :root {
+  --circle-light-fill: #ccc;
+  --circle-dark-fill: #b0b0b0;
+  --circle-hover-fill: #bed;
+  --domain-fill: #eee;
 }

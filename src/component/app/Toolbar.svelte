@@ -2,8 +2,8 @@
   import Slider from "$component/control/Slider.svelte";
 
   import { packingRadius } from "$store/parameter";
-  import { tool, Mode } from "$store/tool";
-  import { polygon } from "$store/polygon";
+  import { tool, position, Mode } from "$store/tool";
+  import { domain, packing, drawings } from "$store/polygon";
 </script>
 
 <div class="toolbar">
@@ -26,12 +26,20 @@
       set domain: rectangle
     </button>
     <button
-      class:active={$tool.mode === Mode.Anchor}
-      on:click={() => ($tool = { mode: Mode.Anchor })}>adjust anchors</button
+      class:active={$tool.mode === Mode.AnchorZero}
+      on:click={() => ($tool = { mode: Mode.AnchorZero })}
+      >change zero anchor</button
     >
     <button
+      class:active={$tool.mode === Mode.AnchorAxis}
+      on:click={() => ($tool = { mode: Mode.AnchorAxis })}
+      >change positive-real anchor</button
+    >
+
+    <button
       class:active={$tool.mode === Mode.Draw}
-      on:click={() => ($tool = { mode: Mode.Draw })}>add drawings</button
+      on:click={() => ($tool = { mode: Mode.Draw, drawing: [] })}
+      >add drawings</button
     >
   </div>
   <div class="detail">
@@ -40,7 +48,7 @@
       {@const reset = () => ($tool = { mode: Mode.Polygon, polygon: [] })}
       <button
         on:click={() => {
-          $polygon = toolPolygon;
+          $domain = { polygon: toolPolygon };
           reset();
         }}
         disabled={$tool.polygon.length < 3}>confirm</button
@@ -61,7 +69,22 @@
         mark the second corner of the rectangle.
       {/if}
     {/if}
+    {#if $tool.mode === Mode.Draw}
+      <button on:click={() => void ($drawings = [])}>clear all drawings</button>
+      <button on:click={() => void ($drawings = $drawings.slice(0, -1))}
+        >undo last drawing</button
+      >
+    {/if}
+    {#if $tool.mode === Mode.AnchorZero}
+      click a point in the left pane to fix a point to send to zero. drag to
+      move the point.
+    {/if}
+    {#if $tool.mode === Mode.AnchorAxis}
+      click a point in the left pane to fix a point to send to the positive real
+      axis. drag to move the point.
+    {/if}
   </div>
+  <div class="status" />
   <Slider min={0.02} max={0.1} bind:value={$packingRadius} />
 </div>
 
