@@ -1,5 +1,6 @@
 <script lang="ts">
   import Slider from "$component/control/Slider.svelte";
+  import * as Complex from "$lib/complex";
 
   import { packingRadius } from "$store/parameter";
   import { tool, position, Mode } from "$store/tool";
@@ -48,7 +49,7 @@
       {@const reset = () => ($tool = { mode: Mode.Polygon, polygon: [] })}
       <button
         on:click={() => {
-          $domain = { polygon: toolPolygon };
+          $domain = { ...$domain, polygon: toolPolygon };
           reset();
         }}
         disabled={$tool.polygon.length < 3}>confirm</button
@@ -94,15 +95,22 @@
   }
 
   .mode {
+    display: flex;
+
     & > button {
+      & + button {
+        margin-left: 0.5em;
+      }
       background: white;
-      border: 1px solid gray;
+      border: 1px solid lightgray;
       font: inherit;
-      padding: 0.25em 0.75em;
+      padding: 0.125em 0.5em;
+      line-height: 1.25em;
+      font-size: 0.875em;
       cursor: pointer;
 
       &.active {
-        background: gray;
+        background: lightgray;
       }
     }
   }

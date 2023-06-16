@@ -3,6 +3,8 @@ import * as Interval from "$lib/interval";
 
 export type Segment = readonly [Complex.Complex, Complex.Complex];
 
+export const pathD = ([z, w]: Segment) => `M${z.x} ${z.y}L${w.x} ${w.y}`;
+
 export const map = (
   [z1, z2]: Segment,
   f: (z: Complex.Complex) => Complex.Complex

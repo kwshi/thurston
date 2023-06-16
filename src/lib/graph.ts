@@ -1,5 +1,5 @@
 import type * as Complex from "$lib/complex";
-import * as Lattice from "$lib/lattice";
+import type * as Lattice from "$lib/lattice";
 
 export type NodeOf<T, P> = { id: symbol; label: T; petals: P };
 
@@ -195,6 +195,94 @@ export const traverseDfs = function* <T>(origin: Node<T>) {
       seen.add(petal);
       frontier.push(petal);
     }
+  }
+};
+
+export const traverseDfsParent = function* <T>(origin: NodeInterior<T>) {
+  const seen = new Set<Node<T>>();
+  const frontier: { node: NodeInterior<T>; parent: NodeInterior<T> }[] = [];
+  for (const petal of origin.petals) {
+    yield { node: petal, parent: origin };
+    if (petal.petals) frontier.push({ node: petal, parent: origin });
+  }
+
+  for (;;) {
+    const entry = frontier.pop();
+    if (!entry) break;
+
+    if (!entry.node.petals) continue;
+    for (const petal of entry.node.petals) {
+      if (seen.has(petal)) continue;
+      seen.add(petal);
+      yield { node: petal, parent: entry.node };
+      if (petal.petals) frontier.push({ node: petal, parent: entry.node });
+    }
+  }
+};
+
+export const traverseDfsEdges = function* <T>(origin: NodeInterior<T>) {
+  const seen = new Set<NodeInterior<T>>();
+
+  const frontier: NodeInterior<T>[] = [];
+  for (const petal of origin.petals) {
+    yield { node: petal, parent: origin };
+    if (petal.petals) frontier.push(petal);
+  }
+  seen.add(origin);
+
+  for (;;) {
+    const node = frontier.pop();
+    if (!node) break;
+
+    if (seen.has(node)) continue;
+    seen.add(node);
+
+    if (!node.petals) continue;
+    for (const petal of node.petals) {
+      if (!petal.petals) {
+        yield { node: petal, parent: node };
+        continue;
+      }
+      if (seen.has(petal)) continue;
+      yield { node: petal, parent: node };
+      frontier.push(petal);
+    }
+  }
+};
+
+export const findBoundary = <T>(origin: NodeInterior<T>) => {
+  const fingers = new Map<NodeBoundary<T>, NodeInterior<T>[]>();
+  for (const edge of traverseDfsEdges(origin)) {
+    if (isInterior(edge.node)) continue;
+    if (!fingers.has(edge.node)) fingers.set(edge.node, []);
+    fingers.get(edge.node)!.push(edge.parent);
+  }
+
+  const first = fingers.keys().next();
+  if (first.done) return [];
+
+  const seen = new Set<NodeBoundary<T>>();
+  const boundary = [first.value];
+  seen.add(first.value);
+
+  for (;;) {
+    const last = boundary[boundary.length - 1]!;
+    const parents = fingers.get(last)!;
+
+    let next: NodeBoundary<T> | null = null;
+    for (const parent of parents) {
+      // TODO can pass this in during construction of fingers
+      const i = parent.petals.indexOf(last)!;
+      const maybe = parent.petals[(i + 1) % parent.petals.length]!;
+      if (!maybe.petals && !seen.has(maybe)) {
+        next = maybe;
+        break;
+      }
+    }
+
+    if (!next) return boundary;
+    seen.add(next);
+    boundary.push(next);
   }
 };
 

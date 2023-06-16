@@ -1,5 +1,8 @@
 ---
-import "../css/theme.css";
+import "$css/theme.css";
+import "katex/dist/katex.min.css";
+import "$css/katex.css";
+
 export type Props = { title: string };
 ---
 
@@ -30,7 +33,7 @@ export type Props = { title: string };
 
 <style>
   :root {
-    font-family: Mukta;
+    font-family: var(--font);
   }
   body {
     margin: 0;

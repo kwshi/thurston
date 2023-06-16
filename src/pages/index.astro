@@ -4,10 +4,10 @@ import Thurston from "$component/app/Thurston.svelte";
 import Readme from "$component/app/Readme.md";
 ---
 
-<Html title="help">
+<Html title="Thurston's Riemann-mapping conjecture">
   <div class="layout">
     <header>
-      <h1>Interactive explorations in Thurston's Riemann-mapping conjecture</h1>
+      <h1>Interactive explorations of Thurston's Riemann-mapping conjecture</h1>
     </header>
     <main>
       <Thurston client:load />
@@ -22,23 +22,35 @@ import Readme from "$component/app/Readme.md";
   .layout {
     position: absolute;
     inset: 0;
+    background-color: var(--page-bg);
 
     display: grid;
     grid-template-areas: "header readme" "thurston readme";
     grid-template-rows: auto 1fr;
+    grid-template-columns: 2fr 1fr;
+    row-gap: 1rem;
+    column-gap: 1rem;
 
     & > header {
       grid-area: header;
-      margin: 1rem 2rem;
+      margin: 2rem 2rem 0 2rem;
+
+      & > h1 {
+        margin: 0;
+        font-size: 1.5rem;
+        line-height: 1.25em;
+      }
     }
 
     & > article {
       grid-area: readme;
       overflow-y: auto;
+      margin-right: 2rem;
     }
 
     & > main {
       grid-area: thurston;
+      display: grid;
     }
   }
 </style>

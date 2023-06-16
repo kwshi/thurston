@@ -1,3 +1,5 @@
+import * as Complex from "$lib/complex";
+
 export const petalAngleE = (v: number, u: number, w: number) =>
   2 * Math.asin(Math.sqrt((u / (v + u)) * (w / (v + w))));
 
@@ -45,4 +47,17 @@ export const relaxFlowerH = (v: number, petals: number[]) => {
   const v̂ = Math.max(0, (β - Math.sqrt(v)) / (β * v - Math.sqrt(v)));
   const t = (2 * δ) / (Math.sqrt((1 - v̂) * (1 - v̂) + 4 * δ * δ * v̂) + (1 - v̂));
   return t * t;
+};
+
+export const hyperbolicCircleToEuclidean = (
+  z: Complex.Complex,
+  r̃: number
+): { center: Complex.Complex; radius: number } => {
+  const r = (1 - Math.sqrt(r̃)) / (1 + Math.sqrt(r̃));
+  const r2 = r * r;
+  const norm2 = Complex.abs2(z);
+  return {
+    radius: (r * (1 - norm2)) / (1 - r2 * norm2),
+    center: Complex.scale(z, (1 - r2) / (1 - r2 * norm2)),
+  };
 };

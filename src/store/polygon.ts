@@ -4,8 +4,6 @@ import * as Complex from "$lib/complex";
 import * as Polygon from "$lib/polygon";
 import * as Graph from "$lib/graph";
 import * as Pack from "$lib/pack";
-import * as Lattice from "$lib/lattice";
-import * as Label from "$lib/label";
 import * as Geometry from "$lib/geometry";
 
 import * as Parameter from "$store/parameter";
@@ -88,10 +86,11 @@ export const packing = Store.derived(
           ?.get(handle.coordinate.column);
         if (!nodeE) return null;
         const nodeH = hyperbolic.replace.get(nodeE)!;
-        total = Complex.add(
-          total,
-          Complex.scale(nodeH.label.position, handle.weight)
+        const { center } = Geometry.hyperbolicCircleToEuclidean(
+          nodeH.label.position,
+          nodeH.label.radius
         );
+        total = Complex.add(total, Complex.scale(center, handle.weight));
       }
 
       return total;

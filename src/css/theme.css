@@ -1,4 +1,11 @@
 :root {
+  --font: Mukta;
+
+  --page-bg: #eee;
+
+  --canvas-bg: #fff;
+  --canvas-border-color: #ccc;
+
   --circle-light-fill: #ccc;
   --circle-dark-fill: #b0b0b0;
   --circle-hover-fill: #bed;

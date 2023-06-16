@@ -2,6 +2,8 @@
   import * as Graph from "$lib/graph";
   import * as Complex from "$lib/complex";
   import * as Polygon from "$lib/polygon";
+  import * as Geometry from "$lib/geometry";
+  import * as Segment from "$lib/segment";
 
   import Toolbar from "$component/app/Toolbar.svelte";
 
@@ -32,14 +34,21 @@
         $tool = { mode: Mode.Polygon, polygon: [...$tool.polygon, pos] };
         return;
 
-      case Mode.DomainSlit:
+      case Mode.DomainSlit: {
         if (!$tool.slit) {
           $tool = { ...$tool, slit: [pos, pos] };
           return;
         }
-        $domain = { polygon: Polygon.slitDomain($tool.slit, 64) };
+        const [a, b] = $tool.slit;
+        const ray = Complex.sub(b, a);
+        $domain = {
+          polygon: Polygon.slitDomain($tool.slit, 64),
+          zero: Complex.sub(a, Complex.scaleInv(ray, 2)),
+          axis: Complex.sub(a, Complex.scale(ray, 3 / 4)),
+        };
         $tool = { mode: Mode.DomainSlit };
         return;
+      }
 
       case Mode.DomainRectangle:
         if (!$tool.diagonal) {
@@ -167,6 +176,24 @@
             cy={-node.label.position.y * unitSize + viewportHeight / 2}
           />
         {/each}
+        <path
+          d={Polygon.toPathD(
+            Graph.findBoundary($packing.euclideanGraph)
+              .map((node) => node.label.position)
+              .map(toCanvas)
+          ) +
+            [...Graph.traverseDfsEdges($packing.euclideanGraph)]
+              .map(({ node, parent }) =>
+                Segment.pathD([
+                  toCanvas(node.label.position),
+                  toCanvas(parent.label.position),
+                ])
+              )
+              .join("")}
+          stroke="black"
+          fill="rgba(0,0,0,.5)"
+          opacity=".25"
+        />
       {/if}
 
       <circle cx={zero.x} cy={zero.y} r={3} fill="blue" />
@@ -248,28 +275,57 @@
       />
       {#if $packing}
         {#each [...Graph.traverseDfs($packing.hyperbolicGraph)] as node}
-          {@const R =
-            (1 - Math.sqrt(node.label.radius)) /
-            (1 + Math.sqrt(node.label.radius))}
-          {@const z = Complex.abs(node.label.position)}
-          {@const r = ((R * (1 - z * z)) / (1 - R * z * R * z)) * unitSize}
-          {@const c = Complex.scale(
+          {@const circle = Geometry.hyperbolicCircleToEuclidean(
             node.label.position,
-            (1 - R * R) / (1 - R * z * (R * z))
+            node.label.radius
           )}
-          {@const x = c.x * unitSize + viewportWidth / 2}
-          {@const y = -c.y * unitSize + viewportHeight / 2}
+          {@const center = toCanvas(circle.center)}
           <circle
             on:mouseenter={() => void (hoverCircle = node.id)}
             on:mouseleave={() => void (hoverCircle = null)}
             class:odd={node.label.data.row % 2}
             class:even={!(node.label.data.row % 2)}
             class:hover={node.id === hoverCircle}
-            cx={x}
-            cy={y}
-            {r}
+            cx={center.x}
+            cy={center.y}
+            r={circle.radius * unitSize}
           />
         {/each}
+        <path
+          d={Polygon.toPathD(
+            Graph.findBoundary($packing.hyperbolicGraph)
+              .map(
+                (node) =>
+                  Geometry.hyperbolicCircleToEuclidean(
+                    node.label.position,
+                    node.label.radius
+                  ).center
+              )
+              .map(toCanvas)
+          ) +
+            [...Graph.traverseDfsEdges($packing.hyperbolicGraph)]
+              .map(({ node, parent }) =>
+                Segment.pathD([
+                  toCanvas(
+                    Geometry.hyperbolicCircleToEuclidean(
+                      node.label.position,
+                      node.label.radius
+                    ).center
+                  ),
+                  toCanvas(
+                    Geometry.hyperbolicCircleToEuclidean(
+                      parent.label.position,
+                      parent.label.radius
+                    ).center
+                  ),
+                ])
+              )
+              .join("")}
+          stroke="black"
+          fill="rgba(0,0,0,.5)"
+          opacity=".25"
+        />
+
         {#if $position && ($tool.mode === Mode.Draw || $tool.mode === Mode.AnchorZero || $tool.mode === Mode.AnchorAxis)}
           {@const w = $packing.mapPoint($position)}
           {#if w}
@@ -316,12 +372,13 @@
     grid-template-areas: "toolbar toolbar" "left right";
     grid-template-rows: auto 1fr;
     grid-template-columns: 1fr 1fr;
-    padding: 2rem;
-    gap: 2rem;
+    padding: 0 1rem 1rem 1rem;
+    gap: 1rem;
   }
 
   svg {
-    border: 1px solid gray;
+    border: 1px solid var(--canvas-border-color);
+    background-color: var(--canvas-bg);
   }
 
   circle {
