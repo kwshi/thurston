@@ -22,7 +22,7 @@ This app is an interactive demonstration of Thurston's conjecture. Here's how it
 
 - Start by specifying $U$ using the “set domain” tools, and use the “change zero/positive-real anchor” tools to specify $z₀$ and $z₁$.
 
-- Once this is done, the circle-packings and triangulations (of both the original domain and the unit disk) will be automatically computed and displayed. Use the “resolution” slider to adjust $ϵ$, the size of circles in the original packing.
+- Once this is done, the circle-packings and triangulations (of both the original domain and the unit disk) will be automatically computed and displayed. Use the “resolution” slider to adjust $ϵ$, the size of circles in the original packing. Hover over circles on either side to highlight corresponding circles on the other side.
 
 - Use the “add drawings” tool to mark points and curves within $U$ (in the left pane); their images in $𝔻$ will be automatically computed and rendered (in the right pane).
 
