@@ -20,6 +20,18 @@ Check out the live demo at <https://kwshi.github.io/thurston>!
 
 This app is an interactive demonstration of this process. Check it out here: <https://kwshi.github.io/thurston>.
 
-## Disclaimer
+# References
+
+(Note: this list of references may be incomplete, because I haven't had the time to properly document each component of this app.)
+
+- Most of the mathematical content/know-how for this project came from taking Terry Tao's complex analysis course at UCLA (Math 246C, spring 2023) in the unit on circle-packings and quasiconformal maps. In fact, this project was created as an assigned final project for this course. Notes for this subject are [publicly available on Terry Tao's blog](https://terrytao.wordpress.com/2018/04/12/246c-notes-2-circle-packings-conformal-maps-and-quasiconformal-maps/).
+
+- The hexagonal circle-fitting algorithm (where, given an arbitrary polygon, the interior circle-packing/triangulation is computed) is a customization of the ray-casting algorithm used to solve the [point in polygon](https://en.wikipedia.org/wiki/Point_in_polygon) problem.
+
+- The circle-packing algorithm is a simplified version of [Collins &amp; Stephenson's original algorithm](<https://doi.org/10.1016/S0925-7721(02)00099-8>) based on local relaxation of radii and a "uniform neighbor model".
+
+- Some inspiration for this project came from [Beeker &amp; Loustau's implementation of a similar app using C++ and Qt](https://brice.loustau.eu/circlepackings/indexen.html). In particular, [this screenshot of their app](https://brice.loustau.eu/ressources/circlepackings2.png) looked really cool, and I wanted to recreate it, but I was dismayed to find that all of the download/installation links on their website were broken (at least, when I last checked), and I couldn't get their program to compile correctly. Plus, I figured, a version that runs on the web would ultimately end up being more accessible than a version that requires downloading and installing.
+
+# Disclaimer
 
 This project is incomplete! I'm still working on polishing it, adding features, etc. If you have any suggestions, please feel free to create a GitHub issue.
