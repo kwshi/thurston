@@ -84,14 +84,15 @@ export const thickIntersect = (
   if (w1) intercepts.push(z1.x - w1, z1.x + w1);
   if (w2) intercepts.push(z2.x - w2, z2.x + w2);
 
-  const [seg, see] = thicken(segment, radius)!;
-  const segX = intersectHorizontal(seg, y);
-  const seeX = intersectHorizontal(see, y);
-  const cross = intersectHorizontal(segment, y);
-
-  if (segX !== null) intercepts.push(segX);
-  if (seeX !== null) intercepts.push(seeX);
+  const thick = thicken(segment, radius)!;
+  if (thick) {
+    const [seg, see] = thick;
+    const segX = intersectHorizontal(seg, y);
+    const seeX = intersectHorizontal(see, y);
+    if (segX !== null) intercepts.push(segX);
+    if (seeX !== null) intercepts.push(seeX);
+  }
 
   const interval = Interval.hull(intercepts);
-  return interval ? { interval, cross } : null;
+  return interval ? { interval, cross: intersectHorizontal(segment, y) } : null;
 };
