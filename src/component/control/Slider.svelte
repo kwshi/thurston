@@ -4,44 +4,84 @@
 
   export let value: number;
 
+  let sliderWidth = 1;
+
   $: percent = ((value - min) / (max - min)) * 100;
 
-  type DivMouseEvent = MouseEvent & { currentTarget: HTMLDivElement };
+  let start: { value: number; position: number } | null = null;
 
-  let active = false;
-  const setValue = (event: DivMouseEvent) =>
-    (value =
-      Math.round(
-        (min +
-          (event.offsetX / event.currentTarget.offsetWidth) * (max - min)) *
-          1000
-      ) / 1000);
+  const normalize = (x: number) =>
+    Math.min(max, Math.max(min, Math.round(x * 1000) / 1000));
 
-  const mouseDown = (event: DivMouseEvent) => {
-    active = true;
-    setValue(event);
+  const startDrag = (event: MouseEvent) =>
+    void (start = { position: event.pageX, value });
+
+  const stopDrag = () => void (start = null);
+
+  const mouseMove = (event: MouseEvent) => {
+    if (!start) return;
+    value = normalize(
+      start.value + ((event.pageX - start.position) / sliderWidth) * (max - min)
+    );
   };
-  const mouseUp = () => void (active = false);
-  const mouseMove = (event: DivMouseEvent) => void (active && setValue(event));
 </script>
 
-<div
-  class="slider"
-  on:mousedown={mouseDown}
-  on:mouseup={mouseUp}
-  on:mouseleave={mouseUp}
+<svelte:window
+  on:mouseup={stopDrag}
+  on:mouseleave={stopDrag}
   on:mousemove={mouseMove}
-  style:background-image="linear-gradient(to right,#ccc {percent}%,#eee {percent}%)"
->
-  {value}
+/>
+<div class="slider" bind:clientWidth={sliderWidth}>
+  <div class="track">
+    <div class="handle" style:left="{percent}%" on:mousedown={startDrag} />
+  </div>
+  <div class="value">{value}</div>
 </div>
 
 <style lang="postcss">
   .slider {
-    width: 8rem;
-    position: relative;
+    display: inline-grid;
+    margin: 0 0.5em;
+    grid-template-columns: auto auto;
+    column-gap: 0.5em;
+    align-items: baseline;
+  }
 
+  .track {
+    position: relative;
+    width: 8rem;
+    cursor: pointer;
+    align-self: center;
+
+    &::before {
+      content: "";
+      position: absolute;
+      display: block;
+      background-color: gray;
+      width: 100%;
+      top: 50%;
+
+      border-radius: 0.125em;
+      height: 0.25em;
+      margin-top: -0.125em;
+    }
+  }
+
+  .handle {
+    background-color: white;
+    border: 1px solid black;
+    position: absolute;
+    top: 50%;
+    align-items: baseline;
+
+    width: 0.75em;
+    height: 0.75em;
+    border-radius: 0.375em;
+    margin-top: -0.375em;
+    margin-left: -0.375em;
+  }
+
+  .value {
     user-select: none;
-    text-align: center;
   }
 </style>

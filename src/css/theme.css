@@ -6,6 +6,9 @@
   --canvas-bg: #fff;
   --canvas-border-color: #ccc;
 
+  --slider-bg: #fff;
+  --slider-fg: #ac6;
+
   --circle-light-fill: #ccc;
   --circle-dark-fill: #b0b0b0;
   --circle-hover-fill: #bed;

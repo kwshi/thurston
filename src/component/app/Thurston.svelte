@@ -6,6 +6,7 @@
   import * as Segment from "$lib/segment";
 
   import Toolbar from "$component/app/Toolbar.svelte";
+  import Status from "$component/app/Status.svelte";
 
   import { tool, position, Mode } from "$store/tool";
   import { domain, packing, drawings, mappedDrawings } from "$store/polygon";
@@ -364,16 +365,23 @@
       {/each}
     </svg>
   </div>
+  <div class="status">
+    <Status />
+  </div>
 </div>
 
 <style lang="postcss">
   .layout {
     display: grid;
-    grid-template-areas: "toolbar toolbar" "left right";
-    grid-template-rows: auto 1fr;
+    grid-template-areas: "toolbar toolbar" "left right" "status status";
+    grid-template-rows: auto 1fr 4rem;
     grid-template-columns: 1fr 1fr;
     padding: 0 1rem 1rem 1rem;
     gap: 1rem;
+
+    & > .status {
+      grid-area: status;
+    }
   }
 
   svg {

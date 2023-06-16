@@ -1,13 +1,19 @@
 <script lang="ts">
   import Slider from "$component/control/Slider.svelte";
-  import * as Complex from "$lib/complex";
 
   import { packingRadius } from "$store/parameter";
-  import { tool, position, Mode } from "$store/tool";
-  import { domain, packing, drawings } from "$store/polygon";
+  import { tool, Mode } from "$store/tool";
+  import { domain, drawings } from "$store/polygon";
 </script>
 
 <div class="toolbar">
+  <div class="control">
+    circle packing resolution: <Slider
+      min={0.02}
+      max={0.1}
+      bind:value={$packingRadius}
+    />
+  </div>
   <div class="mode">
     <button
       class:active={$tool.mode === Mode.Polygon}
@@ -43,55 +49,13 @@
       >add drawings</button
     >
   </div>
-  <div class="detail">
-    {#if $tool.mode === Mode.Polygon}
-      {@const toolPolygon = $tool.polygon}
-      {@const reset = () => ($tool = { mode: Mode.Polygon, polygon: [] })}
-      <button
-        on:click={() => {
-          $domain = { ...$domain, polygon: toolPolygon };
-          reset();
-        }}
-        disabled={$tool.polygon.length < 3}>confirm</button
-      >
-      <button on:click={reset} disabled={!$tool.polygon.length}>reset</button>
-    {/if}
-    {#if $tool.mode === Mode.DomainSlit}
-      {#if !$tool.slit}
-        click a point to mark the center of the slit domain.
-      {:else}
-        click somewhere else to mark the endpoint of the slit.
-      {/if}
-    {/if}
-    {#if $tool.mode === Mode.DomainRectangle}
-      {#if !$tool.diagonal}
-        click a point to mark the first corner of the rectangle.
-      {:else}
-        mark the second corner of the rectangle.
-      {/if}
-    {/if}
-    {#if $tool.mode === Mode.Draw}
-      <button on:click={() => void ($drawings = [])}>clear all drawings</button>
-      <button on:click={() => void ($drawings = $drawings.slice(0, -1))}
-        >undo last drawing</button
-      >
-    {/if}
-    {#if $tool.mode === Mode.AnchorZero}
-      click a point in the left pane to fix a point to send to zero. drag to
-      move the point.
-    {/if}
-    {#if $tool.mode === Mode.AnchorAxis}
-      click a point in the left pane to fix a point to send to the positive real
-      axis. drag to move the point.
-    {/if}
-  </div>
-  <div class="status" />
-  <Slider min={0.02} max={0.1} bind:value={$packingRadius} />
 </div>
 
 <style lang="postcss">
   .toolbar {
     grid-area: toolbar;
+    display: grid;
+    row-gap: 0.5em;
   }
 
   .mode {
