@@ -28,7 +28,7 @@ This app is an interactive demonstration of this process. Check it out here: <ht
 
 - The hexagonal circle-fitting algorithm (where, given an arbitrary polygon, the interior circle-packing/triangulation is computed) is a customization of the ray-casting algorithm used to solve the [point in polygon](https://en.wikipedia.org/wiki/Point_in_polygon) problem.
 
-- The circle-packing algorithm is a simplified version of [Collins &amp; Stephenson's original algorithm](<https://doi.org/10.1016/S0925-7721(02)00099-8>) based on local relaxation of radii and a "uniform neighbor model".
+- The circle-packing algorithm is a simplified version of [Collins &amp; Stephenson's original algorithm](<https://doi.org/10.1016/S0925-7721(02)00099-8>) based on local relaxation of radii and a "uniform neighbor model". Stephenson has a working Java implementation of this algorithm [posted on his website](https://web.math.utk.edu/~kens/CirclePack/); it contains many more in-depth explorations focused on circle packings.
 
 - Some inspiration for this project came from [Beeker &amp; Loustau's implementation of a similar app using C++ and Qt](https://brice.loustau.eu/circlepackings/indexen.html). In particular, [this screenshot of their app](https://brice.loustau.eu/ressources/circlepackings2.png) looked really cool, and I wanted to recreate it, but I was dismayed to find that all of the download/installation links on their website were broken (at least, when I last checked), and I couldn't get their program to compile correctly. Plus, I figured, a version that runs on the web would ultimately end up being more accessible than a version that requires downloading and installing.
 
