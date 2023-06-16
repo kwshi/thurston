@@ -2,6 +2,8 @@
 import Html from "$layout/Html.astro";
 import Thurston from "$component/app/Thurston.svelte";
 import Readme from "$component/app/Readme.md";
+
+import "$css/article.css";
 ---
 
 <Html title="Thurston's Riemann-mapping conjecture">
@@ -37,7 +39,7 @@ import Readme from "$component/app/Readme.md";
 
       & > h1 {
         margin: 0;
-        font-size: 1.5rem;
+        font-size: 2rem;
         line-height: 1.25em;
       }
     }
@@ -45,7 +47,7 @@ import Readme from "$component/app/Readme.md";
     & > article {
       grid-area: readme;
       overflow-y: auto;
-      margin-right: 2rem;
+      padding-right: 2rem;
     }
 
     & > main {
