@@ -9,8 +9,12 @@
   --slider-bg: #fff;
   --slider-fg: #ac6;
 
-  --circle-light-fill: #ccc;
-  --circle-dark-fill: #b0b0b0;
-  --circle-hover-fill: #bed;
+  --circle-fill: black;
+  --circle-odd-opacity: 0.125;
+  --circle-even-opacity: 0.25;
+
+  --circle-hover-fill: #49f;
+  --circle-hover-opacity: 0.5;
+
   --domain-fill: #eee;
 }

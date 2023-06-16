@@ -163,20 +163,6 @@
         fill="var(--domain-fill)"
       />
       {#if $packing}
-        {#each [...Graph.traverseDfs($packing.euclideanGraph)] as node}
-          <circle
-            on:mouseenter={() => void (hoverCircle = node.id)}
-            on:mouseleave={() => void (hoverCircle = null)}
-            data-row={node.label.data.row}
-            data-column={node.label.data.column}
-            class:odd={node.label.data.row % 2}
-            class:even={!(node.label.data.row % 2)}
-            class:hover={node.id === hoverCircle}
-            r={node.label.radius * unitSize}
-            cx={node.label.position.x * unitSize + viewportWidth / 2}
-            cy={-node.label.position.y * unitSize + viewportHeight / 2}
-          />
-        {/each}
         <path
           d={Polygon.toPathD(
             Graph.findBoundary($packing.euclideanGraph)
@@ -195,6 +181,22 @@
           fill="rgba(0,0,0,.5)"
           opacity=".25"
         />
+
+        {#each [...Graph.traverseDfs($packing.euclideanGraph)] as node}
+          <circle
+            class="pack"
+            on:mouseenter={() => void (hoverCircle = node.id)}
+            on:mouseleave={() => void (hoverCircle = null)}
+            data-row={node.label.data.row}
+            data-column={node.label.data.column}
+            class:odd={node.label.data.row % 2}
+            class:even={!(node.label.data.row % 2)}
+            class:hover={node.id === hoverCircle}
+            r={node.label.radius * unitSize}
+            cx={node.label.position.x * unitSize + viewportWidth / 2}
+            cy={-node.label.position.y * unitSize + viewportHeight / 2}
+          />
+        {/each}
       {/if}
 
       <circle cx={zero.x} cy={zero.y} r={3} fill="blue" />
@@ -275,23 +277,6 @@
         r={unitSize}
       />
       {#if $packing}
-        {#each [...Graph.traverseDfs($packing.hyperbolicGraph)] as node}
-          {@const circle = Geometry.hyperbolicCircleToEuclidean(
-            node.label.position,
-            node.label.radius
-          )}
-          {@const center = toCanvas(circle.center)}
-          <circle
-            on:mouseenter={() => void (hoverCircle = node.id)}
-            on:mouseleave={() => void (hoverCircle = null)}
-            class:odd={node.label.data.row % 2}
-            class:even={!(node.label.data.row % 2)}
-            class:hover={node.id === hoverCircle}
-            cx={center.x}
-            cy={center.y}
-            r={circle.radius * unitSize}
-          />
-        {/each}
         <path
           d={Polygon.toPathD(
             Graph.findBoundary($packing.hyperbolicGraph)
@@ -326,6 +311,25 @@
           fill="rgba(0,0,0,.5)"
           opacity=".25"
         />
+
+        {#each [...Graph.traverseDfs($packing.hyperbolicGraph)] as node}
+          {@const circle = Geometry.hyperbolicCircleToEuclidean(
+            node.label.position,
+            node.label.radius
+          )}
+          {@const center = toCanvas(circle.center)}
+          <circle
+            class="pack"
+            on:mouseenter={() => void (hoverCircle = node.id)}
+            on:mouseleave={() => void (hoverCircle = null)}
+            class:odd={node.label.data.row % 2}
+            class:even={!(node.label.data.row % 2)}
+            class:hover={node.id === hoverCircle}
+            cx={center.x}
+            cy={center.y}
+            r={circle.radius * unitSize}
+          />
+        {/each}
 
         {#if $position && ($tool.mode === Mode.Draw || $tool.mode === Mode.AnchorZero || $tool.mode === Mode.AnchorAxis)}
           {@const w = $packing.mapPoint($position)}
@@ -389,15 +393,18 @@
     background-color: var(--canvas-bg);
   }
 
-  circle {
+  circle.pack {
+    fill: var(--circle-fill);
+
     &.odd {
-      fill: var(--circle-dark-fill);
+      opacity: var(--circle-odd-opacity);
     }
     &.even {
-      fill: var(--circle-light-fill);
+      opacity: var(--circle-even-opacity);
     }
     &.hover {
       fill: var(--circle-hover-fill);
+      opacity: var(--circle-hover-opacity);
     }
   }
 </style>
