@@ -6,7 +6,8 @@
       "$lib/*": ["lib/*"],
       "$component/*": ["component/*"],
       "$layout/*": ["layout/*"],
-      "$store/*": ["store/*"]
+      "$store/*": ["store/*"],
+      "$css/*": ["css/*"]
     },
     "plugins": [{ "name": "@astrojs/ts-plugin" }]
   },
