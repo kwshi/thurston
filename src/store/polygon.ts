@@ -8,6 +8,8 @@ import * as Geometry from "$lib/geometry";
 
 import * as Parameter from "$store/parameter";
 
+import terryDrawing from "./default/terryDrawing.json";
+
 export const domain = Store.writable<{
   readonly polygon: Polygon.Polygon;
   readonly zero: Complex.Complex;
@@ -157,7 +159,7 @@ export const packing = Store.derived(
   }
 );
 
-export const drawings = Store.writable<Polygon.Polygon[]>([]);
+export const drawings = Store.writable<Polygon.Polygon[]>(terryDrawing);
 
 export const mappedDrawings = Store.derived(
   [drawings, packing],
