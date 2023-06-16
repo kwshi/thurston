@@ -4,7 +4,7 @@
 
 **Riemann's mapping theorem** states the following. Suppose $U$ is a non-empty, proper open subset of $ℂ$ and that $U$ is simply-connected, and let $z₀,z₁∈U$. Then there exists a unique biholomorphism $ϕ\colon U→𝔻$ (where $𝔻$ is the unit disk), with the property that $ϕ(z₀)=0$, and $ϕ(z₁)$ lands on the positive-real axis.
 
-**Thurston's conjecture** (also sometimes known as the **discrete Riemann mapping theorem**) provides an insightful (and pretty!) construction/visualization of the Riemann mapping theorem, proceeding roughly as follows:
+**Thurston's conjecture** (also sometimes known as the **discrete/finite Riemann mapping theorem**) provides an insightful (and pretty!) construction/visualization of the Riemann mapping theorem, proceeding roughly as follows:
 
 1. Given a (bounded) domain $U$, approximately triangulate $U$ via a hexagonal circle-packing of radius $ϵ$.
 
@@ -28,6 +28,8 @@ This app is an interactive demonstration of Thurston's conjecture. Here's how it
 
 - Use the “add drawings” tool to mark points and curves within $U$ (in the left pane); their images in $𝔻$ will be automatically computed and rendered (in the right pane).
 
+<!--
+
 # cool explorations
 
 ## “Koebe” map
@@ -35,3 +37,5 @@ This app is an interactive demonstration of Thurston's conjecture. Here's how it
 ## sharp angles
 
 ## schwarz christoffel?
+
+-->
