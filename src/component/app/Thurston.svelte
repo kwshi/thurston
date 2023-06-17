@@ -177,6 +177,7 @@
   <Toolbar />
   <div>
     <svg
+      xmlns="http://www.w3.org/2000/svg"
       width="100%"
       height="100%"
       on:mousedown={mouseDown}
@@ -310,7 +311,7 @@
     bind:clientWidth={viewportWidth}
     bind:clientHeight={viewportHeight}
   >
-    <svg width="100%" height="100%">
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
       <circle
         stroke="black"
         fill="none"
