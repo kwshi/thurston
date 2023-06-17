@@ -43,7 +43,7 @@
         const [a, b] = $tool.slit;
         const ray = Complex.sub(b, a);
         $domain = {
-          polygon: Polygon.slitDomain($tool.slit, 64),
+          polygon: Polygon.sector($tool.slit, 2 * Math.PI, 64),
           zero: Complex.sub(a, Complex.scaleInv(ray, 2)),
           axis: Complex.sub(a, Complex.scale(ray, 3 / 4)),
         };
@@ -67,6 +67,26 @@
         };
         $tool = { mode: Mode.DomainRectangle };
         return;
+
+      case Mode.DomainHalfDisk: {
+        if (!$tool.ray) {
+          $tool = { ...$tool, ray: [pos, pos] };
+          return;
+        }
+        const [a, b] = $tool.ray;
+        const arm = Complex.sub(b, a);
+        $domain = {
+          polygon: Polygon.sector(
+            [a, Complex.add(a, Complex.mul(arm, Complex.neg(Complex.i)))],
+            Math.PI,
+            64
+          ),
+          zero: Complex.add(a, Complex.scaleInv(arm, 2)),
+          axis: Complex.add(a, Complex.scale(arm, 3 / 4)),
+        };
+        $tool = { mode: Mode.DomainHalfDisk };
+        return;
+      }
 
       case Mode.Draw:
         $tool = { ...$tool, drawing: [pos] };
@@ -103,6 +123,13 @@
         const [z] = $tool.diagonal;
         $tool = { ...$tool, diagonal: [z, pos] };
         return;
+
+      case Mode.DomainHalfDisk: {
+        if (!$tool.ray) return;
+        const [z] = $tool.ray;
+        $tool = { ...$tool, ray: [z, pos] };
+        return;
+      }
 
       case Mode.Draw:
         if (!$tool.drawing.length) return;
@@ -251,6 +278,21 @@
             stroke="green"
           />
           <line stroke="green" x1={c.x} y1={c.y} x2={e.x} y2={e.y} />
+        {/if}
+      {/if}
+
+      {#if $tool.mode === Mode.DomainHalfDisk}
+        {#if $tool.ray}
+          {@const [z, w] = $tool.ray}
+          {@const a = Complex.mul(Complex.i, Complex.sub(w, z))}
+          {@const start = toCanvas(Complex.sub(z, a))}
+          {@const end = toCanvas(Complex.add(z, a))}
+          {@const r = unitSize * Complex.dist(z, w)}
+          <path
+            d="M{start.x} {start.y}A{r} {r} 0 0 0 {end.x} {end.y} Z"
+            fill="rgba(0,128,0,.1)"
+            stroke="green"
+          />
         {/if}
       {/if}
 

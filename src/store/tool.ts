@@ -7,6 +7,8 @@ export const enum Mode {
   Polygon,
   DomainSlit,
   DomainRectangle,
+  DomainHalfDisk,
+  DomainSector,
   AnchorZero,
   AnchorAxis,
   Draw,
@@ -22,6 +24,11 @@ export type State =
       readonly slit?: Segment.Segment;
     }
   | { readonly mode: Mode.DomainRectangle; readonly diagonal?: Segment.Segment }
+  | { readonly mode: Mode.DomainHalfDisk; readonly ray?: Segment.Segment }
+  | {
+      readonly mode: Mode.DomainSector;
+      readonly sector?: { ray: Segment.Segment; angle?: number };
+    }
   | { readonly mode: Mode.AnchorZero }
   | { readonly mode: Mode.AnchorAxis }
   | { readonly mode: Mode.Draw; readonly drawing: Polygon.Polygon };

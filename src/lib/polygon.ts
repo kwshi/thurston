@@ -8,16 +8,16 @@ import * as Interval from "$lib/interval";
 
 export type Polygon = readonly Complex.Complex[];
 
-export const slitDomain = (segment: Segment.Segment, n: number): Polygon => {
-  const [center, endpoint] = segment;
+export const sector = (
+  [center, endpoint]: Segment.Segment,
+  angle: number,
+  n: number
+): Polygon => {
   const points: Complex.Complex[] = [center, endpoint];
   const ray = Complex.sub(endpoint, center);
   for (let i = 1; i <= n; ++i)
     points.push(
-      Complex.add(
-        center,
-        Complex.mul(ray, Complex.polar(1, (i / n) * 2 * Math.PI))
-      )
+      Complex.add(center, Complex.mul(ray, Complex.polar(1, (i / n) * angle)))
     );
   return points;
 };

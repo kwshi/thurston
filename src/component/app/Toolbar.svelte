@@ -3,7 +3,6 @@
 
   import { packingRadius } from "$store/parameter";
   import { tool, Mode } from "$store/tool";
-  import { domain, drawings } from "$store/polygon";
 </script>
 
 <div class="toolbar">
@@ -33,6 +32,12 @@
       set domain: rectangle
     </button>
     <button
+      class:active={$tool.mode === Mode.DomainHalfDisk}
+      on:click={() => ($tool = { mode: Mode.DomainHalfDisk })}
+    >
+      set domain: half disk
+    </button>
+    <button
       class:active={$tool.mode === Mode.AnchorZero}
       on:click={() => ($tool = { mode: Mode.AnchorZero })}
       >change zero anchor</button
@@ -42,7 +47,6 @@
       on:click={() => ($tool = { mode: Mode.AnchorAxis })}
       >change positive-real anchor</button
     >
-
     <button
       class:active={$tool.mode === Mode.Draw}
       on:click={() => ($tool = { mode: Mode.Draw, drawing: [] })}
