@@ -85,9 +85,16 @@ export const hexagonalFit = (
   return coordinates;
 };
 
-export const cutThick = (points: Polygon, radius: number) => {
-  const coordinates = hexagonalFit(points, radius);
+export const cutThick = (points: Polygon, radius: number) =>
+  buildFlowers(hexagonalFit(points, radius), radius);
 
+export const cutThin = (points: Polygon, radius: number) =>
+  buildFlowers(hexagonalFitThin(points, radius), radius);
+
+export const buildFlowers = (
+  coordinates: Lattice.CoordinateSet,
+  radius: number
+) => {
   const nodes: Lattice.CoordinateMap<
     Graph.NodeUnresolved<Label.Full, Lattice.Coordinate>
   > = new Map();
@@ -151,8 +158,9 @@ export const cutThick = (points: Polygon, radius: number) => {
 
 /*
   old code, may still be useful
+*/
 
-export const findIntercepts = (points: Complex.Complex[], step: number) => {
+export const findIntercepts = (points: Polygon, step: number) => {
   const rows = new Map<number, number[]>();
   for (const [z1, z2] of Misc.adjacentPairs(points)) {
     const r1 = z1.y / step;
@@ -171,29 +179,22 @@ export const findIntercepts = (points: Complex.Complex[], step: number) => {
   return rows;
 };
 
-export const cut = (points: Complex.Complex[], radius: number) => {
-  const stuff: Complex.Complex[] = [];
+export const hexagonalFitThin = (points: Polygon, radius: number) => {
+  const coordinates = new Map<number, Set<number>>();
 
   const rowHeight = Math.sqrt(3) * radius;
   const rows = findIntercepts(points, rowHeight);
   console.log(rows);
   for (const [r, row] of rows.entries()) {
-    const y = r * rowHeight;
+    const columns = new Set<number>();
+    coordinates.set(r, columns);
+
     for (let i = 0; i + 1 < row.length; i += 2) {
-      const left = Math.ceil((row[i]! / radius - r + 1) / 2);
-      const right = Math.floor((row[i + 1]! / radius - r - 1) / 2);
-      for (let j = left; j <= right; ++j) {
-        stuff.push(Complex.complex((r + 2 * j) * radius, y));
-      }
+      const left = Math.ceil((row[i]! / radius - r) / 2);
+      const right = Math.floor((row[i + 1]! / radius - r) / 2);
+      for (let j = left; j <= right; ++j) columns.add(j);
     }
   }
 
-  return stuff;
-
-  //const graph: Graph.GraphUnresolved<
-  //  Graph.Label.Position &
-  //    Graph.Label.Radius &
-  //    Graph.Label.Data<{ row: number; column: number }>
-  //> = new Map();
+  return coordinates;
 };
-*/
