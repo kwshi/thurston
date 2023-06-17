@@ -182,6 +182,7 @@ export const resolve = <T>(
 export const traverseDfs = function* <T>(origin: Node<T>) {
   const seen = new Set<Node<T>>();
   const frontier = [origin];
+  seen.add(origin);
 
   for (;;) {
     const node = frontier.pop();
