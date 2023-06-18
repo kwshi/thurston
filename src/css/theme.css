@@ -9,12 +9,19 @@
   --slider-bg: #fff;
   --slider-fg: #ac6;
 
-  --circle-fill: black;
-  --circle-odd-opacity: 0.125;
-  --circle-even-opacity: 0.25;
+  --circle-odd-fill: #0672;
+  --circle-even-fill: #0674;
 
-  --circle-hover-fill: #49f;
-  --circle-hover-opacity: 0.5;
+  --circle-odd-stroke: #067;
+  --circle-even-stroke: #067;
 
-  --domain-fill: #eee;
+  --triangulation-fill: #0383;
+  --triangulation-stroke: #0384;
+
+  --circle-hover-fill: #a628;
+
+  --domain-fill: #0002;
+  --domain-stroke: #023;
+
+  --drawing-stroke: #000;
 }

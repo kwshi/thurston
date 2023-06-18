@@ -185,13 +185,10 @@
       on:mousemove={mouseMove}
       on:mouseleave={mouseLeave}
     >
-      <path
-        d={Polygon.toPathD($domain.polygon.map(toCanvas))}
-        stroke="black"
-        fill="var(--domain-fill)"
-      />
+      <path class="domain" d={Polygon.toPathD($domain.polygon.map(toCanvas))} />
       {#if $packing}
         <path
+          class="triangulation"
           d={Polygon.toPathD(
             Graph.findBoundary($packing.euclideanGraph)
               .map((node) => node.label.position)
@@ -205,9 +202,6 @@
                 ])
               )
               .join("")}
-          stroke="black"
-          fill="rgba(0,0,0,.5)"
-          opacity=".25"
         />
 
         {#each [...Graph.traverseDfs($packing.euclideanGraph)] as node}
@@ -234,7 +228,7 @@
         <path
           d={Polygon.toPathD(curve.map(toCanvas), false)}
           stroke-width="2"
-          stroke="black"
+          stroke="var(--drawing-stroke)"
           fill="none"
         />
       {/each}
@@ -313,14 +307,14 @@
   >
     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
       <circle
-        stroke="black"
-        fill="none"
+        class="domain"
         cx={viewportWidth / 2}
         cy={viewportHeight / 2}
         r={unitSize}
       />
       {#if $packing}
         <path
+          class="triangulation"
           d={Polygon.toPathD(
             Graph.findBoundary($packing.hyperbolicGraph)
               .map(
@@ -350,9 +344,6 @@
                 ])
               )
               .join("")}
-          stroke="black"
-          fill="rgba(0,0,0,.5)"
-          opacity=".25"
         />
 
         {#each [...Graph.traverseDfs($packing.hyperbolicGraph)] as node}
@@ -406,7 +397,7 @@
         <path
           d={Polygon.toPathD(drawing.map(toCanvas), false)}
           stroke-width="2"
-          stroke="black"
+          stroke="var(--drawing-stroke)"
           fill="none"
         />
       {/each}
@@ -436,18 +427,27 @@
     background-color: var(--canvas-bg);
   }
 
-  circle.pack {
-    fill: var(--circle-fill);
+  .domain {
+    fill: var(--domain-fill);
+    stroke: var(--domain-stroke);
+    stroke-width: 1.5px;
+  }
 
+  .triangulation {
+    fill: var(--triangulation-fill);
+    stroke: var(--triangulation-stroke);
+    stroke-width: 1.5px;
+  }
+
+  circle.pack {
     &.odd {
-      opacity: var(--circle-odd-opacity);
+      fill: var(--circle-odd-fill);
     }
     &.even {
-      opacity: var(--circle-even-opacity);
+      fill: var(--circle-even-fill);
     }
     &.hover {
       fill: var(--circle-hover-fill);
-      opacity: var(--circle-hover-opacity);
     }
   }
 </style>
