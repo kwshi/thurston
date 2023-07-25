@@ -159,7 +159,7 @@ export const packing = Store.derived(
   }
 );
 
-export const drawings = Store.writable<Polygon.Polygon[]>(terryDrawing);
+export const drawings = Store.writable<Polygon.Polygon[]>([]);
 
 export const mappedDrawings = Store.derived(
   [drawings, packing],
